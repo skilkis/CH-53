@@ -33,7 +33,7 @@ class Inertia(object):
 
 class Component(object):
     """ Class definition that every component of the helicopter inherits from. Due to class inheritance, when defining
-    a new class only the attributes `i_xx_prime`, `i_yy_prime`, and 'i_zz_prime` need to be redefined. These are the
+    a new class only the attributes `i_xx_prime`, `i_yy_prime`, and `i_zz_prime` need to be redefined. These are the
     equations describing the Mass Moment of Inertia of the Component w.r.t its own center of gravity.
 
     :param mass: Component mass in SI kilogram [kg]
@@ -42,6 +42,7 @@ class Component(object):
     :type position: Point
     :param reference: Body Axis System origin (center of gravity (c.g)) w.r.t the global reference system
     :type reference: Point
+
     """
 
     def __init__(self, mass, position=Point(0, 0, 0), reference=Point(0, 0, 0)):
@@ -50,12 +51,15 @@ class Component(object):
         self.reference = reference
 
     def i_xx_prime(self):
+        """ Mass Moment of Inertia on the xx'-axis """
         return 0.0
 
     def i_yy_prime(self):
+        """ Mass Moment of Inertia on the yy'-axis """
         return 0.0
 
     def i_zz_prime(self):
+        """ Mass Moment of Inertia on the zz'-axis """
         return 0.0
 
     @property
@@ -98,6 +102,15 @@ class Component(object):
 
 
 class Box(Component):
+    """ Useful for the main fuselage and rotor nacelle
+
+    :param width: Dimension of object along y-axis in SI meter [m]
+    :param length: Dimension of object along x-axis in SI meter [m]
+    :param height: Dimension of the object along the z-axis in SI meter [m]
+    :param mass: Mass of the box in SI kilogram [kg]
+    :param position: Location of the object center w.r.t the global system of reference in SI meter [m]
+    :param reference: Body Axis System origin (center of gravity (c.g)) w.r.t the global reference system in SI meter [m]
+    """
     def __init__(self, width, length, height, **kwargs):
         self.width = width
         self.length = length
@@ -105,110 +118,139 @@ class Box(Component):
         super(Box, self).__init__(**kwargs)
 
     def i_xx_prime(self):
-        return self.mass * ((self.width ** 2) + (self.height ** 2))
+        return 1.0/12.0 * self.mass * ((self.width ** 2) + (self.height ** 2))
 
-    # def i_yy_prime(self):
+    def i_yy_prime(self):
+        return 1.0/12.0 * self.mass * ((self.length ** 2) + (self.height ** 2))
 
-
-#
-# def steiner_term(mass, position, cg_position=Point(0, 0, 0)):
-#     """ Returns the increased inertia due to displacement of an object from the body center of gravity (c.g) also
-#     known as the parallel axis theorem, due to the property of the mass moment of inertia describing a 3D quantity the
-#     parallel axis theorem requires the
-#
-#     :param mass: Mass of the component in SI kg [kg]
-#     :param distance: Longitudinal Distance to the center of gravity (c.g.) in SI meter [m]
-#     :return: Mass Moment of Inertia in SI kilogram meter squared [kg m^2]
-#     :rtype: float
-#     """
-#
-#     i_parallel = mass * (distance1 ** 2 + distance2 ** 2)
-#
-#     return i_parallel
+    def i_zz_prime(self):
+        return 1.0/12.0 * self.mass * ((self.width ** 2) + (self.length ** 2))
 
 
-# def cylinder(mass, radius, length):
-#     """ Useful for the inertia of the motors
-#
-#     :param mass: Mass of object in SI kilogram
-#     :param radius: Radius of the cylinder
-#     :param length: Dimension of object along x-axis in SI m
-#     :rtype: tuple
-#     :return: Mass Moment of Inertia around x, y, z axis respectively
-#     """
-#     i_yy = 1.0/12.0 * mass * (3 * (radius ** 2) + (length ** 2))
-#     i_zz = i_yy
-#     i_xx = 0.5 * mass * (radius ** 2)
-#     return inertia_format(i_xx, i_yy, i_zz)
-#
-#
-# def thin_plate(mass, width, length, position=Point(0, 0, 0)):
-#     """ Useful for the inertia of the rotors
-#
-#     :param mass: Mass of object in SI kilogram
-#     :param width: Dimension of object along y-axis in SI meter
-#     :param length: Dimension of object along x-axis in SI meter
-#     :param position: Location of the object center w.r.t the global system of reference in SI meter
-#     :rtype: tuple
-#     :return: Mass Moment of Inertia around x, y, z axis respectively
-#     """
-#     i_xx = 1.0/12.0 * mass * (width ** 2)
-#     i_yy = 1.0/12.0 * mass * (length ** 2)
-#     i_zz = 1.0/12.0 * mass * ((length ** 2) + (width ** 2))
-#     return i_xx, i_yy, i_zz
-#
-#
-# def thin_disk(mass, radius, position=Point(0, 0, 0)):
-#     """ Useful for the inertia of the rotors, the thin disk is oriented such that the z-axis is the axis of revolve,
-#     thus for the tail-rotor utilize the formula for I_zz for I_yy.
-#
-#     :param mass: Mass of object in SI kilogram
-#     :param radius: Radius of the Disk along the y-axis in SI meter
-#     :param position: Location of the object center w.r.t the global system of reference in SI meter
-#     :rtype: tuple
-#     :return: Mass Moment of Inertia around x, y, z axis respectively
-#     """
-#     i_xx_prime = 1.0/4.0 * mass * radius ** 2 + steiner_term(mass, position.x)
-#     i_yy_prime = 1.0/4.0 * mass * radius ** 2 + steiner_term(mass, position.y)
-#     i_zz_prime = 3.0/2.0 * mass * radius ** 2 + steiner_term(mass, position.z)
-#     return i_xx, i_yy, i_zz
-#
-#
-# def hemi_sphere(mass, radius, position=Point(0, 0, 0)):
-#     """ Useful for rotor hub assembly
-#
-#     :param mass: Mass of object in SI kilogram
-#     :param radius: Radius of the cylinder in SI meter
-#     :param position: Location of the object center w.r.t the global system of reference in SI meter
-#     :rtype: tuple
-#     :return: Mass Moment of Inertia around x, y, z axis respectively
-#     """
-#
-#     i_xx = 0.259 * mass * (radius ** 2) + steiner_term(mass, position.y, position.z)
-#     i_yy = i_xx + steiner_term(mass, position.x, position.y)
-#     i_zz = 2.0 / 5.0 * mass * (radius ** 2) + steiner_term(mass, position.z)
-#     return i_xx, i_yy, i_zz
-#
-#
-# def box(mass, width, height, length, position=Point(0, 0, 0)):
-#     """ Useful for the main fuselage of the rotors
-#
-#     :param mass: Mass of object in SI kilogram
-#     :param width: Dimension of object along y-axis in SI meter
-#     :param height: Dimension of the object along the z-axis in SI meter
-#     :param length: Dimension of object along x-axis in SI meter
-#     :param position: Location of the object center w.r.t the global system of reference in SI meter
-#     :rtype: tuple
-#     :return: Mass Moment of Inertia around x, y, z axis respectively
-#     """
-#
-#     i_xx = (mass * ((width ** 2) + (height ** 2))) / 12.0 + steiner_term(mass, position.x)
-#     i_yy = (mass * ((height ** 2) + (length ** 2))) / 12.0 + steiner_term(mass, position.y)
-#     i_zz = (mass * ((width ** 2) + (length ** 2))) / 12.0 + steiner_term(mass, position.z)
-#     return i_xx, i_yy, i_zz
+class Cylinder(Component):
+    """ Useful for the inertia of the motors. The cylinder is oriented such that the revolve direction is the x-axis
+
+    :param radius: Radius of the cylinder
+    :param length: Dimension of object along x-axis in SI m
+    :param mass: Mass of the cylinder in SI kilogram [kg]
+    :param position: Location of the object center w.r.t the global system of reference in SI meter [m]
+    :param reference: Body Axis System origin (center of gravity (c.g)) w.r.t the global reference system in SI meter [m]
+    """
+
+    def __init__(self, radius, length, **kwargs):
+        self.radius = radius
+        self.length = length
+        super(Cylinder, self).__init__(**kwargs)
+
+    def i_xx_prime(self):
+        return 0.5 * self.mass * (self.radius ** 2)
+
+    def i_yy_prime(self):
+        return self.mass * (1.0/12.0 * (self.length ** 2) + 1.0/4.0 * (self.radius ** 2))
+
+    def i_zz_prime(self):
+        return self.mass * (1.0/12.0 * (self.length ** 2) + 1.0/4.0 * (self.radius ** 2))
+
+
+class Plate(Component):
+    """ Useful for the inertia of the control surfaces (H Tail, V Tail)
+
+
+    :param width: Dimension of object along y-axis in SI meter [m]
+    :param length: Dimension of object along x-axis in SI meter [m]
+    :param mass: Mass of the plate in SI kilogram [kg]
+    :param position: Location of the object center w.r.t the global system of reference in SI meter [m]
+    :param reference: Body Axis System origin (center of gravity (c.g)) w.r.t the global reference system in SI meter [m]
+    """
+
+    def __init__(self, width, length, **kwargs):
+        self.width = width
+        self.length = length
+        super(Plate, self).__init__(**kwargs)
+
+    def i_xx_prime(self):
+        return 1.0/12.0 * self.mass * (self.width ** 2)
+
+    def i_yy_prime(self):
+        return 1.0/12.0 * self.mass * (self.length ** 2)
+
+    def i_zz_prime(self):
+        return 1.0/12.0 * self.mass * ((self.width ** 2) + (self.length ** 2))
+
+
+class Disk(Component):
+    """ Useful for the inertia of rotor. The disk is oriented such that the revolve direction is the z-axis, thus if the
+    tail rotor inertia is desired be sure to use `i.zz`.
+
+    :param radius: Radius of the disk
+    :param mass: Mass of the disk in SI kilogram [kg]
+    :param position: Location of the object center w.r.t the global system of reference in SI meter [m]
+    :param reference: Body Axis System origin (center of gravity (c.g)) w.r.t the global reference system in SI meter [m]
+    """
+
+    def __init__(self, radius, **kwargs):
+        self.radius = radius
+        super(Disk, self).__init__(**kwargs)
+
+    def i_xx_prime(self):
+        return 0.5 * self.mass * (self.radius ** 2)
+
+    def i_yy_prime(self):
+        return 1.0/4.0 * self.mass * (self.radius ** 2)
+
+    def i_zz_prime(self):
+        return 1.0/4.0 * self.mass * (self.radius ** 2)
+
+
+class SlenderBar(Component):
+    """ A slender bar useful for push-rods or other slender objects. By default the bar axial direction is the x-axis
+
+    :param length: Dimension of the bar along the x-axis in SI meter [m]
+    :param mass: Mass of the bar in SI kilogram [kg]
+    :param position: Location of the object center w.r.t the global system of reference in SI meter [m]
+    :param reference: Body Axis System origin (center of gravity (c.g)) w.r.t the global reference system in SI meter [m]
+
+    """
+
+    def __init__(self, length, **kwargs):
+        self.length = length
+        super(SlenderBar, self).__init__(**kwargs)
+
+    def i_xx_prime(self):
+        return 0.0
+
+    def i_yy_prime(self):
+        return 1.0/12.0 * self.mass * (self.length ** 2)
+
+    def i_zz_prime(self):
+        return 1.0/12.0 * self.mass * (self.length ** 2)
+
+
+class HemiSphere(Component):
+    """ Useful for the inertia of the rotor hub-cap. The hemi-sphere is oriented such that the revolve direction is the
+    z-axis
+
+    :param radius: Radius of the hemisphere
+    :param mass: Mass of the hemisphere in SI kilogram [kg]
+    :param position: Location of the object center w.r.t the global system of reference in SI meter [m]
+    :param reference: Body Axis System origin (center of gravity (c.g)) w.r.t the global reference system in SI meter [m]
+    """
+
+    def __init__(self, radius, **kwargs):
+        self.radius = radius
+        super(HemiSphere, self).__init__(**kwargs)
+
+    def i_xx_prime(self):
+        return 83.0/320.0 * self.mass * (self.radius ** 2)
+
+    def i_yy_prime(self):
+        return 83.0/320.0 * self.mass * (self.radius ** 2)
+
+    def i_zz_prime(self):
+        return 2.0/5.0 * self.mass * (self.radius ** 2)
 
 
 if __name__ == '__main__':
-    obj = Box(length=1.0, width=1.0, height=1.0, mass=20.0, position=Point(0, 0, 0), reference=Point(0, 2, 3))
-    print obj.i
+    obj = Box(length=1.0, width=1.0, height=1.0, mass=20.0, position=Point(0, 0, 0), reference=Point(0, 0, 0))
+    print obj
 
