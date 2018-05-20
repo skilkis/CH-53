@@ -184,7 +184,7 @@ V_f_m = 2415.1  # [l]
 rho_f_m = .7750 # [kg/l]
 W_f_kg = rho_f_m*V_f_m
 W_f = W_f_kg*f_lb
-WF_f = W_f/W_oe
+WF_f = W_f/W_oe * 100
 
 
 #  Sum of weight fractions percent of M_oe
