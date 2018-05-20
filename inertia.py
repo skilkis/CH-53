@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-""" A file containing all relevant mass moment of inertias as functions
-    Source: http://d2vlcm61l7u1fs.cloudfront.net/media%2F857%2F857134bf-4cae-49a7-ad91-75b4ae9e20bb%2FphpknWzow.png
-"""
+""" A file containing all relevant component shapes """
 
 __author__ = "Şan Kılkış"
 
