@@ -16,10 +16,15 @@ D = 21.95       #  Rotor Diameter
 R = D/2.0   # Rotor Radius [m]
 n = 6           #  Number of Rotor Blades
 c = 0.76        #  Blase chord [m]
-
+l_tr = 13.62    #  Tail Rotor Length (WRT main rotor) [m]
+D_tr = 4.9      #  Tail Rotor Diam. [m]
+R_tr = D_tr/2.0
 FM = 0.7        #  Assumed Figure of Merit.
 
 k = 1.15        #  Assumed k factor for BEM rotor induced power
+k_tr = 1.4      #  Assumed k_tr for tail rotor BEM Power
+c_tr = 0.29     #  Tail Rotor Chord Length
+n_tr = 4.0      #  Number tail rotor Blades
 
 #  Altitude = 304.8m. This is input into a BSc Y1 Python script to get ISA temp and density.
 rho = 1.1895    # Density kg/m^3
@@ -33,7 +38,7 @@ omega = 19.37    #  Main rotor Rotation rate [rad/s]
 C_dp = 0.025     #  Blade average drag coefficient
 
 
-#  Calculate Blade Solidity (psi)
+#  Calculate Main Rotor Blade Solidity (psi)
 psi = (n*c)/(pi*R)
 
 #  Calc Disk Loading
@@ -84,7 +89,7 @@ print 'Hover BEM Power Loading = ', PL_BEM, 'N/W'
 
 
 #  Question 5-7: FWD Flight Rotor Power using parasite, induced and profile drag pwr.
-#  TODO PLOT parasite, induced and profile drag components vs V.
+#  TODO choose flight speed to do this for!!!!!!!!!!!!!!!!!!!
 V = 60.0                        #  Flight Velocity
 u = V/(omega*R)                 #  Tip Speed Ratio
 V_bar = V/v_i_ACT               #  Non-Dimensionalized Velocity
@@ -96,10 +101,7 @@ P_t0 = P_i_fwd + P_p_fwd+ P_par_fwd
 print 'Question 5-7: The Total Power If Forward Flight at V=', V, 'm/s is ', P_t0, 'W'
 
 
-#  TODO Question 5-6: Calculate Tail Rotor Power Using BEM theory
-
-
-# Question 5-6: Plot Power Required components from 5-7 as a function of velocity
+# Question 5-9: Plot Power Required components from 5-7 as a function of velocity
 V_loop = []
 u_loop = []
 V_bar_loop = []
@@ -128,6 +130,24 @@ for i in range(0,200,1):
 
     P_fwd = P_i_fwd + P_p_fwd + P_par_fwd
     P_fwd_loop.append(P_fwd)
+
+
+#  Question 5-8: Calculate Tail Rotor Power Using BEM theory
+#  This is done for FWD Flight for the range of flight velocities in 5-9
+T_tr_lst = []
+v_i_tr_lst = []
+P_i_tr_lst = []
+for i in range(0,len(V_loop),1):
+    T_tr = P_fwd_loop[i]/(omega*l_tr)
+    T_tr_lst.append(T_tr)
+
+    v_i_tr = sqrt(T_tr/(2*pi*rho*(R_tr**2)))
+    v_i_tr_lst.append(v_i_tr)
+
+    P_i_tr = 1.1*k_tr*T_tr*v_i_tr
+    P_i_tr_lst.append(P_i_tr)
+
+
 
 
 #  Plot the power components :)
