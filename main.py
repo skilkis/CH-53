@@ -19,9 +19,9 @@ class Helicopter(object):
     def payload(self):
         return Box(length=20, width=2.1, height=2.1, mass=4000, position=Point(3, 0, 1), reference=Point(3.1, 0, 2))
 
-    @staticmethod
-    def get_childen():
-            return [value for value in Helicopter.__dict__.values() if type(value) is property]
+    # This won't work
+    def get_childen(self):
+            return [value for value in self.__dict__.values() if type(value) is property]
 
     def get_mass(self):
         mass = []
