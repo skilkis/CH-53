@@ -6,6 +6,9 @@ __author__ = ['Nelson Johnson']
 
 from math import *
 import matplotlib.pyplot as plt
+from scipy.interpolate import interp1d
+from scipy.optimize import minimize
+import numpy as np
 
 # Inputs
 g = 9.81        # Gravitational Acceleration [m/s**2]
@@ -162,6 +165,29 @@ print 'Question 5-9: Power Required components are shown in plot as a function o
 #  V_emax = V(P_min)
 #  V_Rmax = V(????)
 
+P_misc_frac = 1.07 # W4_L08_P2dem_forward flight power.pptx.pdf
+P_tot = [(P_fwd_loop[V] + P_tr[V])*P_misc_frac for V in range(0, len(V_loop))]
+
+# P_tot_func = interp1d(V_loop, P_tot, 'linear', fill_value='extrapolate')
+# val = minimize(P_tot_func)
+# print val
+error = []
+slope = []
+for i in range(0, len(V_loop)-1):
+    tangent = P_tot[i+1]/V_loop[i+1]
+    local_tangent = (P_tot[i+1]-P_tot[i])/(V_loop[i+1]-V_loop[i])
+    error.append(abs(tangent - local_tangent))
+    slope.append(tangent)
+
+idx_max_range = error.index(min(error))
+V_max_range = V_loop[idx_max_range]
+
+idx_max_endurance = P_tot.index(min(P_tot))
+
+V_max_endurance = V_loop[idx_max_endurance]
+
+
+
 
 
 #  Plot the power components :)
@@ -170,7 +196,23 @@ plt.plot(V_loop, P_i_fwd_loop, label='Rotor Induced Power')
 plt.plot(V_loop, P_p_fwd_loop, label='Rotor Profile Power')
 plt.plot(V_loop, P_par_fwd_loop, label='Rotor Parasitic Power')
 plt.plot(V_loop, P_tr, label='Tail Rotor (induced and profile) Power')
-plt.plot(V_loop, P_fwd_loop, label='Total Power', linestyle='-.')
+plt.plot(V_loop, P_tot, label='Total Power', linestyle='-.')
+plt.plot([0, V_max_range, V_loop[-1]], [0, P_tot[idx_max_range], V_loop[-1]*slope[idx_max_endurance]],
+         linestyle='-.',
+         color='k')
+plt.plot(V_max_range, P_tot[idx_max_range],
+         marker='o',
+         markerfacecolor='white',
+         markeredgecolor='black', markeredgewidth=1,
+         linewidth=0,
+         label=r'$V_{R_{\mathrm{max}}} = %0.1f$ [m/s]' % V_max_range)
+plt.plot(V_max_endurance, P_tot[idx_max_endurance],
+         marker='o',
+         markerfacecolor='grey',
+         markeredgecolor='black', markeredgewidth=1,
+         linewidth=0,
+         label=r'$V_{E_{\mathrm{max}}} = %0.1f$ [m/s]' % V_max_endurance)
+
 plt.title('Forward Flight Drag Components')
 plt.xlabel('Flight Speed [m/s]')
 plt.ylabel('Power [W]')
