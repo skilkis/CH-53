@@ -20,21 +20,22 @@ l_tr = 13.62    #  Tail Rotor Length (WRT main rotor) [m]
 D_tr = 4.9      #  Tail Rotor Diameter [m]
 R_tr = D_tr/2.0 #  Tail Rotor Radius [m]
 FM = 0.7        #  Assumed Figure of Merit.
+V_cr_kmh = 278.4        #  Assumed Cruise speed used for tip mach no calculation [kmh]
+V_cr = V_cr_kmh/3.6     #  Cruise speed used for tip mach no calculation [m/s]
+
 
 k = 1.15        #  Assumed k factor for BEM rotor induced power
 k_tr = 1.4      #  Assumed k_tr for tail rotor BEM Power
 c_tr = 0.29     #  Tail Rotor Chord Length
 n_tr = 4.0      #  Number tail rotor Blades
-omega_tr_rpm = 699  #  Tail Rotor Speed [rpm]
+omega_tr_rpm = 699                  #  Tail Rotor Speed [rpm] from sikorsky archives
 omega_tr = (omega_tr_rpm*2*pi)/60.0 #  Tail Rotor Rotational Velocity [rad/s]
 
 #  Altitude = 304.8m. This is input into a BSc Y1 Python script to get ISA temp and density.
 rho = 1.1895    # Density kg/m^3
 T_inf = 286.17  #  Freestream Temperature
 
-#  TODO FIND CORRECT VALUE!!!!!!!!!!
-omega = 19.37    #  Main rotor Rotation rate [rad/s]
-
+omega = 19.37    #  Main rotor Rotation rate [rad/s] from sikorsky archives
 
 #  TODO FIND THIS FINAL/APPLICABLE VALUE BY ESTIMATING C_L BAR (REGRESSION WITH W/piR**2). THEN CDP FROM PG 30.
 C_dp = 0.025     #  Blade average drag coefficient
@@ -51,18 +52,16 @@ DL = W/(pi*R**2)
 print 'Disk Loading =', DL, '[N/m^2]'
 
 #  Calc Tip Mach Number
+#  TODO Figure this and C_dp bar out pg 30 reader.
 a_inf = sqrt(1.4*287.1*T_inf)       #  Freestream Speed of Sound
 V_t = omega*R
-M_t = V_t/a_inf                     #  Tip Mach number
+M_t = (V_t+V_cr)/a_inf                     #  Tip Mach number
 
 #  Equivalent Flat Plate Area
 sum_cds = 4.23                       #  This is the Equivalent Flat Plate Area estimated from pg 52 of reader
 
-
-
 #  Question 4-1: Hover induced velocity using ACT theory
 v_i_ACT = sqrt(W / (2 * pi * rho * R ** 2))
-
 print 'Question 4-1: Hover ACT Induced Velocity = ',v_i_ACT, 'm/s'
 
 #  TODO  Question 4-2:
@@ -86,7 +85,7 @@ P_i_BEM = k*W*v_i_ACT
 P_p_BEM = ((psi*C_dp)/8.0)*((rho*(omega*R)**3)*pi*R**2)
 P_hov_BEM = P_i_BEM+P_p_BEM
 PL_BEM = W / P_hov_BEM
-#print 'Tip Mach Number =', M_t
+print 'Tip Mach Number =', M_t
 print 'Question 5-6: Hover BEM Power = ', P_hov_BEM, 'W'
 print 'Hover BEM Power Loading = ', PL_BEM, 'N/W'
 
@@ -159,12 +158,18 @@ for i in range(0,len(V_loop),1):
 print 'Question 5-8: Tail Rotor Power using BEM is shown in plot as a function of V'
 print 'Question 5-9: Power Required components are shown in plot as a function of V'
 
+# TODO Question 6
+#  V_emax = V(P_min)
+#  V_Rmax = V(????)
+
+
+
 #  Plot the power components :)
 plt.style.use('ggplot')
-plt.plot(V_loop, P_i_fwd_loop, label='Induced Power')
-plt.plot(V_loop, P_p_fwd_loop, label='Profile Power')
-plt.plot(V_loop, P_par_fwd_loop, label='Parasitic Power')
-plt.plot(V_loop, P_tr, label='Tail Rotor Power')
+plt.plot(V_loop, P_i_fwd_loop, label='Rotor Induced Power')
+plt.plot(V_loop, P_p_fwd_loop, label='Rotor Profile Power')
+plt.plot(V_loop, P_par_fwd_loop, label='Rotor Parasitic Power')
+plt.plot(V_loop, P_tr, label='Tail Rotor (induced and profile) Power')
 plt.plot(V_loop, P_fwd_loop, label='Total Power', linestyle='-.')
 plt.title('Forward Flight Drag Components')
 plt.xlabel('Flight Speed [m/s]')
