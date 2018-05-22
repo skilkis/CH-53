@@ -19,11 +19,10 @@ def medium_lift_coef(disk_loading=350.0, plot=True):
 
     Usage:
 
-    >>> lift_coefficent = medium_lift_coef(350)
+    >>> lift_coefficent = medium_lift_coef(disk_loading=490)
     >>> print lift_coefficent
     0.695935841011
     """
-
 
     disk_loading_data = np.array([262.3, 309.6, 363.2, 428.6, 325.1])
     mean_lift_coefficient_data = np.array([0.485, 0.499, 0.552, 0.647, 0.556])
@@ -49,10 +48,18 @@ def medium_lift_coef(disk_loading=350.0, plot=True):
         # Scatter Plot of Data
         plt.scatter(disk_loading_data, mean_lift_coefficient_data, label='Data')
 
+        # Calculating R^2
+        residuals = mean_lift_coefficient_data - func(disk_loading_data, params[0], params[1])
+        ss_res = np.sum(residuals ** 2)
+        ss_tot = np.sum((mean_lift_coefficient_data - np.mean(mean_lift_coefficient_data)) ** 2)
+        r_squared = float(1 - (ss_res / ss_tot))
+
         # Linear-Regression Plot
         xvals = np.linspace(200, 500, 10)
         plt.plot(xvals, func(xvals, params[0], params[1]),
-                 label=r'Linear Regression: $\bar{C}_L=%f\cdot\mathrm{DL} + %f$' % (params[0], params[1]))
+                 label=r'Linear Regression:' +
+                       '\n' r'$\bar{C}_L=%f\cdot\mathrm{DL} + %f$' % (params[0], params[1]) +
+                       '\n' r'$R^2$ = %0.2f' % r_squared)
 
         plt.plot(disk_loading, func(disk_loading, params[0], params[1]),
                  marker='o',
