@@ -17,14 +17,16 @@ R = D/2.0   # Rotor Radius [m]
 n = 6           #  Number of Rotor Blades
 c = 0.76        #  Blase chord [m]
 l_tr = 13.62    #  Tail Rotor Length (WRT main rotor) [m]
-D_tr = 4.9      #  Tail Rotor Diam. [m]
-R_tr = D_tr/2.0
+D_tr = 4.9      #  Tail Rotor Diameter [m]
+R_tr = D_tr/2.0 #  Tail Rotor Radius [m]
 FM = 0.7        #  Assumed Figure of Merit.
 
 k = 1.15        #  Assumed k factor for BEM rotor induced power
 k_tr = 1.4      #  Assumed k_tr for tail rotor BEM Power
 c_tr = 0.29     #  Tail Rotor Chord Length
 n_tr = 4.0      #  Number tail rotor Blades
+omega_tr_rpm = 699  #  Tail Rotor Speed [rpm]
+omega_tr = (omega_tr_rpm*2*pi)/60.0 #  Tail Rotor Rotational Velocity [rad/s]
 
 #  Altitude = 304.8m. This is input into a BSc Y1 Python script to get ISA temp and density.
 rho = 1.1895    # Density kg/m^3
@@ -40,6 +42,9 @@ C_dp = 0.025     #  Blade average drag coefficient
 
 #  Calculate Main Rotor Blade Solidity (psi)
 psi = (n*c)/(pi*R)
+
+#  Calculate Tail Rotor Blade Solidity
+psi_tr = (n_tr*c_tr)/(pi*R_tr)
 
 #  Calc Disk Loading
 DL = W/(pi*R**2)
@@ -58,7 +63,7 @@ sum_cds = 4.23                       #  This is the Equivalent Flat Plate Area e
 #  Question 4-1: Hover induced velocity using ACT theory
 v_i_ACT = sqrt(W / (2 * pi * rho * R ** 2))
 
-print '4-1: Hover ACT Induced Velocity = ',v_i_ACT, 'm/s'
+print 'Question 4-1: Hover ACT Induced Velocity = ',v_i_ACT, 'm/s'
 
 #  TODO  Question 4-2:
 
@@ -67,12 +72,12 @@ print '4-1: Hover ACT Induced Velocity = ',v_i_ACT, 'm/s'
 
 #  Question 5-4: Calculate the Helicopter Ideal Power in ACT theory
 P_i_ACT = W * v_i_ACT                   #  Ideal Power ACT [W]
-print 'Question 5-4: Hover ACT Ideal Power = ', P_i_ACT, 'W'
+print 'Question 5-4: ACT Ideal Hover Power = ', P_i_ACT, 'W'
 
 #  Question 5-5: Calculate the hover power in ACT theory
 P_hov_ACT = P_i_ACT / FM
 PL_ACT = W / P_hov_ACT
-print 'Question 5-4: Hover ACT Power = ', P_hov_ACT, 'W'
+print 'Question 5-5: ACT Hover Power = ', P_hov_ACT, 'W'
 print 'Hover ACT Power Loading = ', PL_ACT, 'N/W'
 
 
@@ -81,15 +86,13 @@ P_i_BEM = k*W*v_i_ACT
 P_p_BEM = ((psi*C_dp)/8.0)*((rho*(omega*R)**3)*pi*R**2)
 P_hov_BEM = P_i_BEM+P_p_BEM
 PL_BEM = W / P_hov_BEM
-print P_i_BEM
-print P_p_BEM
-print 'Tip Mach Number =', M_t
-print 'Question 5-5: Hover BEM Power = ', P_hov_BEM, 'W'
+#print 'Tip Mach Number =', M_t
+print 'Question 5-6: Hover BEM Power = ', P_hov_BEM, 'W'
 print 'Hover BEM Power Loading = ', PL_BEM, 'N/W'
 
 
 #  Question 5-7: FWD Flight Rotor Power using parasite, induced and profile drag pwr.
-#  TODO choose flight speed to do this for!!!!!!!!!!!!!!!!!!!
+#  TODO choose flight speed to do 5-7  for!!!!!!!!!!!!!!!!!!!
 V = 60.0                        #  Flight Velocity
 u = V/(omega*R)                 #  Tip Speed Ratio
 V_bar = V/v_i_ACT               #  Non-Dimensionalized Velocity
@@ -137,6 +140,10 @@ for i in range(0,200,1):
 T_tr_lst = []
 v_i_tr_lst = []
 P_i_tr_lst = []
+P_p_tr_lst = []
+P_tr = []
+#  Tail rotor Profile drag = constant with speed!
+P_p_tr = ((psi_tr*C_dp)/8.0)*rho*((omega_tr*R_tr)**3)*pi*R_tr**2
 for i in range(0,len(V_loop),1):
     T_tr = P_fwd_loop[i]/(omega*l_tr)
     T_tr_lst.append(T_tr)
@@ -147,14 +154,17 @@ for i in range(0,len(V_loop),1):
     P_i_tr = 1.1*k_tr*T_tr*v_i_tr
     P_i_tr_lst.append(P_i_tr)
 
+    P_tr.append(P_i_tr_lst[i]+P_p_tr)
 
-
+print 'Question 5-8: Tail Rotor Power using BEM is shown in plot as a function of V'
+print 'Question 5-9: Power Required components are shown in plot as a function of V'
 
 #  Plot the power components :)
 plt.style.use('ggplot')
 plt.plot(V_loop, P_i_fwd_loop, label='Induced Power')
 plt.plot(V_loop, P_p_fwd_loop, label='Profile Power')
 plt.plot(V_loop, P_par_fwd_loop, label='Parasitic Power')
+plt.plot(V_loop, P_tr, label='Tail Rotor Power')
 plt.plot(V_loop, P_fwd_loop, label='Total Power', linestyle='-.')
 plt.title('Forward Flight Drag Components')
 plt.xlabel('Flight Speed [m/s]')
