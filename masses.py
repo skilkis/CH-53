@@ -32,7 +32,7 @@ W_g = f_lb*W_g_kg
 W_oe_kg = 12020
 W_oe = W_oe_kg*f_lb
 
-#  Tandem Constant for Tail Structure TODO figure this out further?
+#  Tandem Constant for Tail Structure
 K_t = 0
 
 #  Main Rotor Blade chord (c) found from https://fas.org/man/dod-101/sys/ac/h-53.htm
@@ -55,9 +55,9 @@ l_f = l_f_m*f_ft
 S_b = w_f*w_f*l_f
 
 #  Nacelle Surface Area [ft^2]
-#  TODO add proper r_n and l_n!!!!!!!!!!!!!!!
-r_n = 0.75*f_ft
-l_n = 2*f_ft
+r_n_m = 1070.0 / 2000.0
+r_n = r_n_m*f_ft
+l_n = 3.5*f_ft
 n_nac = 2.0
 S_n = n_nac*pi*r_n**2*l_n
 
@@ -178,11 +178,12 @@ W_18 = -71.875 + 0.111*S_b + 3.489*(N_p + N_c)
 WF_18 = W_18/W_oe*100
 
 #  Payload [lb]
-W_pl = 14000
+W_pl = 11500  # Adjusted to ensure Gross-Weight not exceeded
 WF_pl = W_pl/W_oe*100
 
 #  Fuel Weight
 V_f_m = 2415.1  # [l]
+# V_f_m = 875  # [2]
 rho_f_m = .7750 # [kg/l]
 W_f_kg = rho_f_m*V_f_m
 W_f = W_f_kg*f_lb
@@ -199,8 +200,8 @@ print 'Gross Weight                 = ', W_g, 'lbs'
 print '2A: Main Rotor Blades Weight = ', W_2A, 'lbs. Percent of W_oe = ', W_2A/W_oe*100
 print '2B: Main Hub & Hinge Weight  = ', W_2B, 'lbs. Percent of W_oe = ', W_2B/W_oe*100
 print '2: COMBINED Total Main Rotor Weight  = ', W_2, 'lbs. Percent of W_oe = ', WF_2
-#  print '3A: Tail Rotor Weight        = ', W_3A, 'lbs. Percent of W_oe = ', W_3A/W_oe*100
-#  print '3B: Tail Structure Weight    = ', W_3B, 'lbs. Percent of W_oe = ', W_3B/W_oe*100
+print '3A: Tail Rotor Weight        = ', W_3A, 'lbs. Percent of W_oe = ', W_3A/W_oe*100
+print '3B: Tail Structure Weight    = ', W_3B, 'lbs. Percent of W_oe = ', W_3B/W_oe*100
 print '3: Tail Weight               = ', W_3, 'lbs. Percent of W_oe = ', WF_3
 print '4:  Body Weight              = ', W_4, 'lbs. Percent of W_oe = ', WF_4
 print '5:  Landing Gear Weight      = ', W_5, 'lbs. Percent of W_oe = ', WF_5

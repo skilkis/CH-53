@@ -193,13 +193,13 @@ class Disk(Component):
         super(Disk, self).__init__(**kwargs)
 
     def i_xx_prime(self):
-        return 0.5 * self.mass * (self.radius ** 2)
+        return 0.25 * self.mass * (self.radius ** 2)
 
     def i_yy_prime(self):
-        return 1.0/4.0 * self.mass * (self.radius ** 2)
+        return 0.25 * self.mass * (self.radius ** 2)
 
     def i_zz_prime(self):
-        return 1.0/4.0 * self.mass * (self.radius ** 2)
+        return 0.5 * self.mass * (self.radius ** 2)
 
 
 class SlenderBar(Component):
