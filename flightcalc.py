@@ -93,12 +93,15 @@ print 'Question 5-6: Hover BEM Power = ', P_hov_BEM, 'W'
 print 'Hover BEM Power Loading = ', PL_BEM, 'N/W'
 
 
-#  Question 5-7: FWD Flight Rotor Power using parasite, induced and profile drag pwr.
-#  TODO choose flight speed to do 5-7  for!!!!!!!!!!!!!!!!!!!
-V = 60.0                        #  Flight Velocity
+#  Question 5-7: FWD Flight Rotor Power using parasite, induced and profile drag pwr. These equations are from pg 48
+#  of the reader.
+V = V_cr                        #  Flight Velocity
 u = V/(omega*R)                 #  Tip Speed Ratio
-V_bar = V/v_i_ACT               #  Non-Dimensionalized Velocity
-P_i_fwd = k*W*(sqrt((-(V_bar**2)/2.0)+sqrt(((V_bar**4)/4)+1)))*v_i_ACT          #  Induced PWR FWD Flight
+v_i_hispeed = W/(2*pi*(R**2)*rho*V)                                             #  High speed induuced velocity
+V_bar = V/v_i_hispeed              #  Non-Dimensionalized Velocity
+v_i_bar = 1/V_bar
+#P_i_fwd = k*W*(sqrt((-(V_bar**2)/2.0)+sqrt(((V_bar**4)/4)+1)))*v_i_ACT         #  Induced PWR FWD Flight (low speed)
+P_i_fwd = k*W*v_i_bar*v_i_hispeed                                                 #  Induced PWR FWD Flight (high speed)
 P_p_fwd = ((psi*C_dp)/8.0)*rho*((omega*R)**3)*pi*(R**2)*(1+(4.65*(u**2)))       #  Profile PWR FWD Flight
 P_par_fwd = sum_cds*0.5*rho*(V**3)                                              #  Parasite Drag PWR FWD Flight
 P_t0 = P_i_fwd + P_p_fwd+ P_par_fwd
@@ -221,4 +224,4 @@ plt.show()
 
 
 
-
+print 'Blade Solidity', psi

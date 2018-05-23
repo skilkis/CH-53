@@ -87,7 +87,7 @@ S_pl = n*c*R
 
 #  2: Total Rotor weight
 W_2A = -88.742+6.403*S_pl   #  Blades Weight
-W_2B = -105.943 + 5.761*S_pl
+W_2B = -105.943 + 5.761*S_pl    # Hub and hinge weight
 W_2 = W_2A+W_2B
 WF_2 = W_2/W_oe*100
 
@@ -224,5 +224,22 @@ print 'xx: Payload Weight            = ', W_pl, 'lbs. Percent of W_oe = ', WF_pl
 print 'xx: Fuel Weight               = ', W_f, 'lbs. Percent of W_oe = ', WF_f
 print 'Sum of Component OE weight fraction', WF_oe
 print 'Sum of Component Gross weight fraction', WF_tot
+
+print
+print
+print 'Inputs to WER Eqautions Below:'
+print
+print 'Blade Planform Surface Area S_pl=', S_pl, '[ft^2]'
+print 'Gross Weight W_g=', W_g, '[lbs]'
+print 'Total Tail Surface Area S_tt =', S_tt, '[ft^2]'
+print 'Tandem Constant For Tail Surface K_t=', K_t, '[-]'
+print 'Body Surface Area S_b = ', S_b, '[ft^2]'
+print 'Nacelle Surface Area S_n = ', S_n, '[ft^2]'
+print 'Engine Horsepower', HP_e, '[shp]'
+print 'Fuel Tank Capacity', G, '[gal]'
+print 'Range R',r,'[mi]'
+print 'Number of Passengers N_p',N_p,'[-]'
+print 'Number of Crew N_c',N_c,'[-]'
+
 
 
