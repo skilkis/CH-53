@@ -86,7 +86,9 @@ S_pl = n*c*R
 
 
 #  2: Total Rotor weight
-W_2 = -194.685+12.164*S_pl
+W_2A = -88.742+6.403*S_pl   #  Blades Weight
+W_2B = -105.943 + 5.761*S_pl
+W_2 = W_2A+W_2B
 WF_2 = W_2/W_oe*100
 
 
@@ -194,16 +196,18 @@ WF_oe = (WF_2+WF_3+WF_4+WF_5+WF_6+WF_7+WF_8+WF_9+WF_10+WF_11+WF_13+WF_14+WF_15+W
 WF_tot = (W_2+W_3+W_4+W_5+W_6+W_7+W_8+W_9+W_10+W_11+W_13+W_14+W_15+W_1617+W_18+W_pl+W_f)*100/W_g
 
 print 'Gross Weight                 = ', W_g, 'lbs'
-print '2:  Total Main Rotor Weight  = ', W_2, 'lbs. Percent of W_oe = ', WF_2
-#  print '3A: Tail Rotor Weight        = ', W_3A, 'lbs. Percent of W_oe = ', W_3A/W_g*100
-#  print '3B: Tail Structure Weight    = ', W_3B, 'lbs. Percent of W_oe = ', W_3B/W_g*100
+print '2A: Main Rotor Blades Weight = ', W_2A, 'lbs. Percent of W_oe = ', W_2A/W_oe*100
+print '2B: Main Hub & Hinge Weight  = ', W_2B, 'lbs. Percent of W_oe = ', W_2B/W_oe*100
+print '2: COMBINED Total Main Rotor Weight  = ', W_2, 'lbs. Percent of W_oe = ', WF_2
+#  print '3A: Tail Rotor Weight        = ', W_3A, 'lbs. Percent of W_oe = ', W_3A/W_oe*100
+#  print '3B: Tail Structure Weight    = ', W_3B, 'lbs. Percent of W_oe = ', W_3B/W_oe*100
 print '3: Tail Weight               = ', W_3, 'lbs. Percent of W_oe = ', WF_3
 print '4:  Body Weight              = ', W_4, 'lbs. Percent of W_oe = ', WF_4
 print '5:  Landing Gear Weight      = ', W_5, 'lbs. Percent of W_oe = ', WF_5
 print '6:  Nacelle Weight           = ', W_6, 'lbs. Percent of W_oe = ', WF_6
-print '7A: Power Plant Weight       = ', W_7A, 'lbs. Percent of W_oe = ', W_7A/W_g*100
-print '7B: Drive System Weight      = ', W_7B, 'lbs. Percent of W_oe = ', W_7B/W_g*100
-print '7C: (Main) Fuel Tank Weight  = ', W_7C, 'lbs. Percent of W_oe = ', W_7C/W_g*100
+print '7A: Power Plant Weight       = ', W_7A, 'lbs. Percent of W_oe = ', W_7A/W_oe*100
+print '7B: Drive System Weight      = ', W_7B, 'lbs. Percent of W_oe = ', W_7B/W_oe*100
+print '7C: (Main) Fuel Tank Weight  = ', W_7C, 'lbs. Percent of W_oe = ', W_7C/W_oe*100
 print '7:  Propulsion System Weight = ', W_7, 'lbs. Percent of W_oe = ', WF_7
 print '8:  Flight Controls Weight   = ', W_8, 'lbs. Percent of W_oe = ', WF_8
 print '9:  Auxiliary Power Weight   = ', W_9, 'lbs. Percent of W_oe = ', WF_9
