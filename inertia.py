@@ -42,13 +42,16 @@ class Component(object):
     :type position: Point
     :param reference: Body Axis System origin (center of gravity (c.g)) w.r.t the global reference system
     :type reference: Point
+    :param orientaton: Mapping variable to orient the shape, Default 'xyz'
+    :type: str
 
     """
 
-    def __init__(self, mass, position=Point(0, 0, 0), reference=Point(0, 0, 0)):
+    def __init__(self, mass, position=Point(0, 0, 0), reference=Point(0, 0, 0), orientation='xyz'):
         self.mass = float(mass)
         self.position = position
         self.reference = reference
+        self.orientation = orientation
 
     def i_xx_prime(self):
         """ Mass Moment of Inertia on the xx'-axis """
@@ -71,14 +74,32 @@ class Component(object):
         return Inertia(self.i_xx_prime(), self.i_yy_prime(), self.i_zz_prime())
 
     @property
+    def i_transformed(self):
+        """ Simple mapped MMOI that orients the shape to the new coordinate system
+
+        :return: Mapped Mass Moment of Inertia w.r.t the component center in SI kilogram meter squared [kg m^2]
+        """
+        _i_transformed = []
+        for i in self.orientation:
+            if i is 'x':
+                _i_transformed.append(self.i_prime.xx)
+            elif i is 'y':
+                _i_transformed.append(self.i_prime.yy)
+            elif i is 'z':
+                _i_transformed.append(self.i_prime.zz)
+            else:
+                raise NameError("You have provided a string input that is not one of 'xyz' format")
+        return Inertia(_i_transformed[0], _i_transformed[1], _i_transformed[2])
+
+    @property
     def i(self):
         """
 
         :return: Mass Moment of Inertia w.r.t a global body axis system utilizing the Parallel Axis Theorem
         """
-        return Inertia(self.i_prime.xx + self.steiner_term.xx,
-                       self.i_prime.yy + self.steiner_term.yy,
-                       self.i_prime.zz + self.steiner_term.zz)
+        return Inertia(self.i_transformed.xx + self.steiner_term.xx,
+                       self.i_transformed.yy + self.steiner_term.yy,
+                       self.i_transformed.zz + self.steiner_term.zz)
 
     @property
     def steiner_term(self):
@@ -153,7 +174,7 @@ class Cylinder(Component):
 
 
 class Plate(Component):
-    """ Useful for the inertia of the control surfaces (H Tail, V Tail)
+    """ Useful for the inertia of the control surfaces (H Tail, V Tail), plate normal is the z-axis by default
 
 
     :param width: Dimension of object along y-axis in SI meter [m]
@@ -180,7 +201,7 @@ class Plate(Component):
 
 class Disk(Component):
     """ Useful for the inertia of rotor. The disk is oriented such that the revolve direction is the z-axis, thus if the
-    tail rotor inertia is desired be sure to use `i.zz`.
+    tail rotor inertia is desired be sure to use 'xzy'.
 
     :param radius: Radius of the disk
     :param mass: Mass of the disk in SI kilogram [kg]
@@ -250,7 +271,32 @@ class HemiSphere(Component):
         return 2.0/5.0 * self.mass * (self.radius ** 2)
 
 
+class UserSpecified(Component):
+    """ Useful for the inertia of a complex part that cannot be easily solved analytically. Thus utilizing CATIA,
+    the inertia of the component can be found on it's own principal axes and inputting into this class definition:
+
+    :param i_input: Input Mass Moment of Inertia vector in SI kilogram meter squared [kg m^2]
+    :type i_input: Inertia
+    :param mass: Mass of the user specified component in SI kilogram [kg]
+    :param position: Location of the object center w.r.t the global system of reference in SI meter [m]
+    :param reference: Body Axis System origin (center of gravity (c.g)) w.r.t the global reference system in SI meter [m]
+    """
+
+    def __init__(self, i_input=Inertia(0, 0, 0), **kwargs):
+        self.i_input = i_input
+        super(UserSpecified, self).__init__(**kwargs)
+
+    def i_xx_prime(self):
+        return self.i_input.xx
+
+    def i_yy_prime(self):
+        return self.i_input.yy
+
+    def i_zz_prime(self):
+        return self.i_input.zz
+
+
 if __name__ == '__main__':
-    obj = Box(length=1.0, width=1.0, height=1.0, mass=20.0, position=Point(0, 0, 0), reference=Point(0, 0, 0))
+    obj = Cylinder(length=1.0, radius=1.0, mass=20.0, position=Point(0, 0, 0), reference=Point(0, 0, 0))
     print obj
 

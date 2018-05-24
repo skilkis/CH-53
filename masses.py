@@ -2,7 +2,28 @@
 #  NASA Parametric Study of Helicopter Aircraft Systems Costs and Weights by Beltramo and Morris.
 #  The units are customary, and are given next to the variables.
 
-from math import *
+from math import pi, exp
+
+
+def lbs_to_kg(kg, power=1):
+    """ A function to convert pounds to kg
+
+    :param kg: Mass in SI kilogram [kg]
+    :param power: Specify power of unit (1 = kg, 2 = kg^2, etc) inverse conversions are possible with negative powers
+    :return: Mass in Imperial pounds
+    """
+    return kg*(2.2046**power)
+
+
+def m_to_ft(m, power=1):
+    """ A function to convert meters to feet
+
+    :param m: Length in SI meter
+    :param power: Specify power of unit (1 = m, 2 = m^2, etc) inverse conversions are possible with negative powers
+    :return: Length in feet
+    """
+
+    return m*2.2046**power
 
 #  kg to lb conversion
 f_lb = 2.2046
