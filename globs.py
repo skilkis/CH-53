@@ -11,7 +11,7 @@ g = 9.81        # Gravitational Acceleration [m/s**2]
 m = 19051       # mass [kg]
 W = m*g         #  Weight [N]
 D = 21.95       #  Rotor Diameter
-R = D/2.0   # Rotor Radius [m]
+R = D/2.0       # Rotor Radius [m]
 n = 6           #  Number of Rotor Blades
 c = 0.76        #  Blase chord [m]
 l_tr = 13.62    #  Tail Rotor Length (WRT main rotor) [m]
@@ -47,7 +47,7 @@ psi_tr = (n_tr*c_tr)/(pi*R_tr)
 
 #  Calc Disk Loading
 DL = W/(pi*R**2)
-print 'Disk Loading =', DL, '[N/m^2]'
+# print 'Disk Loading =', DL, '[N/m^2]'
 
 #  Calc Tip Mach Number
 #  TODO Figure this and C_dp bar out pg 30 reader.
