@@ -26,7 +26,6 @@ def medium_lift_coef(disk_loading=350.0, plot=True):
 
     disk_loading_data = np.array([262.3, 309.6, 363.2, 428.6, 325.1])
     mean_lift_coefficient_data = np.array([0.485, 0.499, 0.552, 0.647, 0.556])
-    _working_dir = os.getcwd()
 
     def func(x, a, b):
         """ Defines a linear regression function y(x) = a*x + b
@@ -41,6 +40,7 @@ def medium_lift_coef(disk_loading=350.0, plot=True):
 
     # Switch-case to allow for accessing the function w/o plotting
     if plot:
+        _working_dir = os.getcwd()  # Added for save functionality
         fig = plt.figure('MediumLiftCoeficient')
         plt.style.use('ggplot')
         plt.title('Medium Lift Coefficient as a Function of Disk Loading')

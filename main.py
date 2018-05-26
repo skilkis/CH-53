@@ -3,6 +3,7 @@
 """ This file contains the class definition used to estimate the Mass Moment of Inertia of the CH53 Helicopter """
 
 from inertia import *
+import matplotlib.pyplot as plt
 
 __author__ = "Şan Kılkış"
 
@@ -13,15 +14,11 @@ class CH53(object):
         self.cg = center_of_gravity
 
     @property
-    def weights(self):
-        return 1.0
-
-    @property
     def fuselage(self):
         return Box(length=12.5,
                    width=2.68,
                    height=2.68,
-                   mass=3657,
+                   mass=2880.046412,
                    position=Point(7.18, 0, 1.82),
                    reference=self.cg)
 
@@ -64,7 +61,7 @@ class CH53(object):
     @property
     def nose_cone(self):
         return HemiSphere(radius=2.68/2.0,
-                          mass=183.8365,
+                          mass=961.7508,
                           position=Point(0.4275, 0, 1.82),
                           reference=self.cg,
                           orientation='zyx')
@@ -117,7 +114,7 @@ class CH53(object):
         return Box(length=2.97,
                    width=1.02,
                    height=1.120,
-                   mass=474.1861,
+                   mass=237.093,
                    position=Point(7.085, 1.85, 1.19),
                    reference=self.cg)
 
@@ -126,7 +123,7 @@ class CH53(object):
         return Box(length=2.97,
                    width=1.02,
                    height=1.120,
-                   mass=474.1861,
+                   mass=237.093,
                    position=Point(7.085, -1.85, 1.19),
                    reference=self.cg)
 
@@ -134,16 +131,16 @@ class CH53(object):
     def external_tank_left(self):
         return Cylinder(radius=0.97/2.0,
                         length=5.6,
-                        mass=578.3728,
-                        position=Point(7.03, 1.85, 1.115),
+                        mass=289.1864,
+                        position=Point(7.03, 3.07, 1.115),
                         reference=self.cg)
 
     @property
     def external_tank_right(self):
         return Cylinder(radius=0.97/2.0,
                         length=5.6,
-                        mass=578.3728,
-                        position=Point(7.03, -1.85, 1.115),
+                        mass=289.1864,
+                        position=Point(7.03, -3.07, 1.115),
                         reference=self.cg)
 
     @property
@@ -161,6 +158,13 @@ class CH53(object):
                              mass=1524.446,
                              position=Point(6.47, 0, 4.845),
                              reference=self.cg)
+
+    # @property
+    # def main_rotor_disk(self):
+    #     return Disk(radius=22.14/2.0,
+    #                 mass=1524.446,
+    #                 position=Point(6.47, 0, 4.845),
+    #                 reference=self.cg)
 
     @property
     def vertical_tail(self):
@@ -229,6 +233,7 @@ class CH53(object):
         moment_x = 0
         moment_y = 0
         moment_z = 0
+
         for child in self.get_childen():
             fetched_object = child.__get__(self)
             if hasattr(fetched_object, 'mass') and hasattr(fetched_object, 'position'):
@@ -252,6 +257,11 @@ class CH53(object):
         return Point(cg_x, cg_y, cg_z)
 
     def get_inertia(self):
+        """ Utilizes the class-method `get_children` to sum up all component inertias.
+
+        :return: Total Mass Moment of Inertia w.r.t the center of gravity in SI kilogram meter squared [kg m^2]
+        :rtype: Inertia
+        """
         i_xx = 0
         i_yy = 0
         i_zz = 0
@@ -264,6 +274,27 @@ class CH53(object):
                 i_zz = i_zz + i.zz
 
         return Inertia(i_xx, i_yy, i_zz)
+
+    def plot_geom(self):
+        fig = plt.figure('ComponentLocation')
+        ax = fig.gca(projection='3d')
+        ax.set_aspect('equal')
+        plt.style.use('ggplot')
+        plt.title('Medium Lift Coefficient as a Function of Disk Loading')
+
+        for child in self.get_childen():
+            fetched_object = child.__get__(self)
+            if hasattr(fetched_object, 'position') and hasattr(fetched_object, 'mass'):
+                position = getattr(fetched_object, 'position')
+                ax.scatter(position.x, position.y, position.z)
+
+        plt.xlabel(r'Disk Loading [N/m$^2$]')
+        plt.ylabel(r'Medium Lift Coefficient [-]')
+        plt.legend(loc='best')
+        plt.ion()
+        plt.show()
+        # fig.savefig(fname=os.path.join(_working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
+        return fig
 
     @staticmethod
     def get_childen():
