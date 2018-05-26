@@ -61,7 +61,6 @@ v_i = []
 for i in range(0, len(V_bar)):
     D_par = sum_cds * rho * (V[i]**2)
     alpha_rad = asin(D_par / W)
-    print degrees(alpha_rad)
 
     def func(x):
         return ((V_bar[i]*sin(alpha_rad)+abs(x))**2 + (V_bar[i]*cos(alpha_rad))**2) - (1/(abs(x)**2))
