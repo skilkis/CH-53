@@ -7,6 +7,7 @@ from globs import *
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import fsolve
+from scipy.interpolate import interp1d
 import os
 from math import sin, cos, asin, degrees
 from collections import Iterable
@@ -125,11 +126,32 @@ haffner_y = V_bar_cr * sin(alpha_rad_cr)
 
 print 'Haffner Diagram x,y = (%0.1f, %0.1f) for V_cr = %0.1f' % (haffner_x, haffner_y, V_bar_cr)
 
+induced_velocity = [v * v_i_hover for v in v_i]
+v_i_func = interp1d(V, induced_velocity, fill_value='extrapolate')
+
 plt.title('Induced Velocity as a Function of Forward Velocity')
 plt.xlabel(r'Non-Dimensional Velocity $\overline{V}=\frac{\mu}{\sqrt{C_T/2}}$')
 plt.ylabel(r'Non-Dimensional Induced Velocity $\overline{v}_i$')
-plt.axis([0, 6, 0, 1.0])
+plt.axis([0, 7, 0, 1.0])
 plt.legend(loc='best')
 plt.show()
 fig.savefig(fname=os.path.join(_working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
+
+
+def v_i_tr_func(V_bar_tr):
+    """ Utilizes ACT theory along w/ the approximation that the AoA of the Tail-Rotor Disk is zero for all speeds
+
+    :param V_bar_tr: Non-Dimensional Tail Rotor Velocity
+    :return: The Non-dimensional Induced Tail Rotor Velocity
+    :rtype: float
+    """
+
+    def func(x):
+        """ Defines a 4-th order equation v_i**4 + (V**2 * v_i**2) - 1 = 0
+
+        :param x: Represents the Non-Dimensional Induced Velocity
+        """
+        return x**4 + ((V_bar_tr ** 2) * (x ** 2)) - 1
+
+    return (fsolve(func, x0=np.array([1])))[0]
 

@@ -4,12 +4,9 @@ __author__ = ['Nelson Johnson']
 
 '''ALL UNITS IN THIS SCRIPT ARE SI'''
 
-from math import *
 import matplotlib.pyplot as plt
-from scipy.interpolate import interp1d
-from scipy.optimize import minimize
-import numpy as np
 from globs import *
+from inducedvelocity import v_i_func, v_i_tr_func
 
 #  Question 4-1: Hover induced velocity using ACT theory
 v_i_ACT = sqrt(W / (2 * pi * rho * R ** 2))
@@ -36,7 +33,6 @@ P_i_BEM = k*W*v_i_ACT
 P_p_BEM = ((psi*C_dp)/8.0)*((rho*(omega*R)**3)*pi*R**2)
 P_hov_BEM = P_i_BEM+P_p_BEM
 PL_BEM = W / P_hov_BEM
-print 'Tip Mach Number =', M_t
 print 'Question 5-6: Hover BEM Power = ', P_hov_BEM, 'W'
 print 'Hover BEM Power Loading = ', PL_BEM, 'N/W'
 
@@ -76,15 +72,12 @@ P_par_fwd_loop = []
 P_fwd_loop = []
 
 #  TODO finalize max speed in this loop.
-for i in range(0,200,1):
+for i in range(0, 200, 1):
     V_loop.append(i)
     u = V_loop[i] / (omega * R)
     u_loop.append(u)
 
-    V_bar = V_loop[i] / v_i_ACT
-    V_bar_loop.append(V_bar)
-
-    P_i_fwd = k * W * (sqrt((-(V_bar_loop[i] ** 2) / 2.0) + sqrt(((V_bar_loop[i] ** 4) / 4) + 1))) * v_i_ACT
+    P_i_fwd = k * W * v_i_func(i)
     P_i_fwd_loop.append(P_i_fwd)
 
     P_p_fwd = ((psi * C_dp) / 8.0) * rho * ((omega * R) ** 3) * pi * (R ** 2) * (1 + (4.65 * (u_loop[i] ** 2)))
@@ -105,18 +98,29 @@ P_i_tr_lst = []
 P_p_tr_lst = []
 P_tr = []
 #  Tail rotor Profile drag = constant with speed!
-P_p_tr = ((psi_tr*C_dp)/8.0)*rho*((omega_tr*R_tr)**3)*pi*R_tr**2
-for i in range(0,len(V_loop),1):
+for i in range(0, len(V_loop)):
     T_tr = P_fwd_loop[i]/(omega*l_tr)
     T_tr_lst.append(T_tr)
 
-    v_i_tr = sqrt(T_tr/(2*pi*rho*(R_tr**2)))
-    v_i_tr_lst.append(v_i_tr)
+    v_i_hover_tr = sqrt(T_tr/(2*pi*rho*(R_tr**2)))
+    V_bar_tr = V_loop[i]/v_i_hover_tr
+    v_i_tr = v_i_tr_func(V_bar_tr) * v_i_hover_tr
 
     P_i_tr = 1.1*k_tr*T_tr*v_i_tr
     P_i_tr_lst.append(P_i_tr)
 
+    mu_tr = V_loop[i]/(omega_tr*R_tr)
+    P_p_tr = ((psi_tr*C_dp)/8.0)*rho*((omega_tr*R_tr)**3)*pi*R_tr**2 * (1+4.65*(mu_tr**2))
+
     P_tr.append(P_i_tr_lst[i]+P_p_tr)
+
+fig = plt.figure('TailRotorPower')
+plt.style.use('ggplot')
+plt.plot(V_loop, [pwr / 1000 for pwr in P_tr])
+plt.title('Tail Rotor Power as a Function of Forward Flight Velocity')
+plt.xlabel('Flight Speed [m/s]')
+plt.ylabel('Power [kW]')
+plt.show()
 
 print 'Question 5-8: Tail Rotor Power using BEM is shown in plot as a function of V'
 print 'Question 5-9: Power Required components are shown in plot as a function of V'
@@ -146,36 +150,32 @@ idx_max_endurance = P_tot.index(min(P_tot))
 
 V_max_endurance = V_loop[idx_max_endurance]
 
-
-
-
-
 #  Plot the power components :)
 plt.style.use('ggplot')
-plt.plot(V_loop, P_i_fwd_loop, label='Rotor Induced Power')
-plt.plot(V_loop, P_p_fwd_loop, label='Rotor Profile Power')
-plt.plot(V_loop, P_par_fwd_loop, label='Rotor Parasitic Power')
-plt.plot(V_loop, P_tr, label='Tail Rotor (induced and profile) Power')
-plt.plot(V_loop, P_tot, label='Total Power', linestyle='-.')
-plt.plot([0, V_max_range, V_loop[-1]], [0, P_tot[idx_max_range], V_loop[-1]*slope[idx_max_endurance]],
+plt.plot(V_loop, [pwr / 1000 for pwr in P_i_fwd_loop], label='Rotor Induced Power')
+plt.plot(V_loop, [pwr / 1000 for pwr in P_p_fwd_loop], label='Rotor Profile Power')
+plt.plot(V_loop, [pwr / 1000 for pwr in P_par_fwd_loop], label='Rotor Parasitic Power')
+plt.plot(V_loop, [pwr / 1000 for pwr in P_tr], label='Tail Rotor (induced and profile) Power')
+plt.plot(V_loop, [pwr / 1000 for pwr in P_tot], label='Total Power', linestyle='-.')
+plt.plot([0, V_max_range, V_loop[-1]], [0, P_tot[idx_max_range]/1000, V_loop[-1]*slope[idx_max_endurance]/1000],
          linestyle='-.',
          color='k')
-plt.plot(V_max_range, P_tot[idx_max_range],
+plt.plot(V_max_range, P_tot[idx_max_range]/1000,
          marker='o',
          markerfacecolor='white',
          markeredgecolor='black', markeredgewidth=1,
          linewidth=0,
          label=r'$V_{R_{\mathrm{max}}} = %0.1f$ [m/s]' % V_max_range)
-plt.plot(V_max_endurance, P_tot[idx_max_endurance],
+plt.plot(V_max_endurance, P_tot[idx_max_endurance]/1000,
          marker='o',
          markerfacecolor='grey',
          markeredgecolor='black', markeredgewidth=1,
          linewidth=0,
          label=r'$V_{E_{\mathrm{max}}} = %0.1f$ [m/s]' % V_max_endurance)
 
-plt.title('Forward Flight Drag Components')
+plt.title('Total Forward Flight Power as a Function of Velocity')
 plt.xlabel('Flight Speed [m/s]')
-plt.ylabel('Power [W]')
+plt.ylabel('Power [kW]')
 plt.legend()
 plt.show()
 

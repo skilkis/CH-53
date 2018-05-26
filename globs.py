@@ -17,7 +17,7 @@ c = 0.76        #  Blase chord [m]
 l_tr = 13.62    #  Tail Rotor Length (WRT main rotor) [m]
 D_tr = 4.9      #  Tail Rotor Diameter [m]
 R_tr = D_tr/2.0 #  Tail Rotor Radius [m]
-FM = 0.7        #  Assumed Figure of Merit.
+FM = 0.69       #  CH-53 Value of Figure of Merit from Sikorsky Archives
 V_cr_kmh = 278.4        #  Assumed Cruise speed used for tip mach no calculation [kmh]
 V_cr = V_cr_kmh/3.6     #  Cruise speed used for tip mach no calculation [m/s]
 
@@ -35,9 +35,6 @@ T_inf = 286.17  #  Freestream Temperature
 
 omega = 19.37    #  Main rotor Rotation rate [rad/s] from sikorsky archives
 
-#  TODO FIND THIS FINAL/APPLICABLE VALUE BY ESTIMATING C_L BAR (REGRESSION WITH W/piR**2). THEN CDP FROM PG 30.
-C_dp = 0.025     #  Blade average drag coefficient
-
 
 #  Calculate Main Rotor Blade Solidity (psi)
 psi = (n*c)/(pi*R)
@@ -53,7 +50,12 @@ DL = W/(pi*R**2)
 #  TODO Figure this and C_dp bar out pg 30 reader.
 a_inf = sqrt(1.4*287.1*T_inf)       #  Freestream Speed of Sound
 V_t = omega*R
-M_t = (V_t+V_cr)/a_inf                     #  Tip Mach number
+M_t = V_t/a_inf                     #  Tip Mach number
+
+print 'Tip Mach Number', M_t
+
+#  TODO FIND THIS FINAL/APPLICABLE VALUE BY ESTIMATING C_L BAR (REGRESSION WITH W/piR**2). THEN CDP FROM PG 30.
+C_dp = 0.0251     #  Blade average drag coefficient
 
 #  Equivalent Flat Plate Area
 sum_cds = 4.23                       #  This is the Equivalent Flat Plate Area estimated from pg 52 of reader
