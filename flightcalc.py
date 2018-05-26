@@ -9,59 +9,7 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 from scipy.optimize import minimize
 import numpy as np
-
-# Inputs
-g = 9.81        # Gravitational Acceleration [m/s**2]
-
-m = 19051       # mass [kg]
-W = m*g         #  Weight [N]
-D = 21.95       #  Rotor Diameter
-R = D/2.0   # Rotor Radius [m]
-n = 6           #  Number of Rotor Blades
-c = 0.76        #  Blase chord [m]
-l_tr = 13.62    #  Tail Rotor Length (WRT main rotor) [m]
-D_tr = 4.9      #  Tail Rotor Diameter [m]
-R_tr = D_tr/2.0 #  Tail Rotor Radius [m]
-FM = 0.7        #  Assumed Figure of Merit.
-V_cr_kmh = 278.4        #  Assumed Cruise speed used for tip mach no calculation [kmh]
-V_cr = V_cr_kmh/3.6     #  Cruise speed used for tip mach no calculation [m/s]
-
-
-k = 1.15        #  Assumed k factor for BEM rotor induced power
-k_tr = 1.4      #  Assumed k_tr for tail rotor BEM Power
-c_tr = 0.29     #  Tail Rotor Chord Length
-n_tr = 4.0      #  Number tail rotor Blades
-omega_tr_rpm = 699                  #  Tail Rotor Speed [rpm] from sikorsky archives
-omega_tr = (omega_tr_rpm*2*pi)/60.0 #  Tail Rotor Rotational Velocity [rad/s]
-
-#  Altitude = 304.8m. This is input into a BSc Y1 Python script to get ISA temp and density.
-rho = 1.1895    # Density kg/m^3
-T_inf = 286.17  #  Freestream Temperature
-
-omega = 19.37    #  Main rotor Rotation rate [rad/s] from sikorsky archives
-
-#  TODO FIND THIS FINAL/APPLICABLE VALUE BY ESTIMATING C_L BAR (REGRESSION WITH W/piR**2). THEN CDP FROM PG 30.
-C_dp = 0.025     #  Blade average drag coefficient
-
-
-#  Calculate Main Rotor Blade Solidity (psi)
-psi = (n*c)/(pi*R)
-
-#  Calculate Tail Rotor Blade Solidity
-psi_tr = (n_tr*c_tr)/(pi*R_tr)
-
-#  Calc Disk Loading
-DL = W/(pi*R**2)
-print 'Disk Loading =', DL, '[N/m^2]'
-
-#  Calc Tip Mach Number
-#  TODO Figure this and C_dp bar out pg 30 reader.
-a_inf = sqrt(1.4*287.1*T_inf)       #  Freestream Speed of Sound
-V_t = omega*R
-M_t = (V_t+V_cr)/a_inf                     #  Tip Mach number
-
-#  Equivalent Flat Plate Area
-sum_cds = 4.23                       #  This is the Equivalent Flat Plate Area estimated from pg 52 of reader
+from globs import *
 
 #  Question 4-1: Hover induced velocity using ACT theory
 v_i_ACT = sqrt(W / (2 * pi * rho * R ** 2))
@@ -98,13 +46,15 @@ print 'Hover BEM Power Loading = ', PL_BEM, 'N/W'
 V = V_cr                        #  Flight Velocity
 u = V/(omega*R)                 #  Tip Speed Ratio
 v_i_hispeed = W/(2*pi*(R**2)*rho*V)                                             #  High speed induuced velocity
-V_bar = V/v_i_hispeed              #  Non-Dimensionalized Velocity
+V_bar = V/v_i_hispeed             #  Non-Dimensionalized Velocity
 v_i_bar = 1/V_bar
 #P_i_fwd = k*W*(sqrt((-(V_bar**2)/2.0)+sqrt(((V_bar**4)/4)+1)))*v_i_ACT         #  Induced PWR FWD Flight (low speed)
 P_i_fwd = k*W*v_i_bar*v_i_hispeed                                                 #  Induced PWR FWD Flight (high speed)
 P_p_fwd = ((psi*C_dp)/8.0)*rho*((omega*R)**3)*pi*(R**2)*(1+(4.65*(u**2)))       #  Profile PWR FWD Flight
 P_par_fwd = sum_cds*0.5*rho*(V**3)                                              #  Parasite Drag PWR FWD Flight
 P_t0 = P_i_fwd + P_p_fwd+ P_par_fwd
+
+
 
 print 'Question 5-7: The Total Power If Forward Flight at V=', V, 'm/s is ', P_t0, 'W'
 
