@@ -108,6 +108,13 @@ P_t0 = P_i_fwd + P_p_fwd+ P_par_fwd
 
 print 'Question 5-7: The Total Power If Forward Flight at V=', V, 'm/s is ', P_t0, 'W'
 
+C_T = W / (rho * pi * (R ** 2) * ((omega * R) ** 2))
+
+C_L_bar = (6.6 * C_T) / psi
+
+print 'Trust Coefficient is ', C_T
+print 'Medium Lift Coefficient is ', C_L_bar
+
 
 # Question 5-9: Plot Power Required components from 5-7 as a function of velocity
 V_loop = []

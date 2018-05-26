@@ -1,15 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+__author__ = "Şan Kılkış"
+
 """ A file containing an optimized linear least-squares regression in order to estimate the mean lift coefficient """
 
 from scipy import optimize
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+from flightcalc import DL
 
 
-def medium_lift_coef(disk_loading=350.0, plot=True):
+def medium_lift_coef(disk_loading=350, plot=True):
     """ A function that allows the user to quickly determine an estimate for the Medium Lift Coefficient based on a disk
     loading for a given helicopter.
 
@@ -79,6 +82,6 @@ def medium_lift_coef(disk_loading=350.0, plot=True):
 
 
 if __name__ == '__main__':
-    f_call = medium_lift_coef(490)
+    f_call = medium_lift_coef(DL)
     print f_call
 
