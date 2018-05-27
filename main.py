@@ -154,7 +154,7 @@ class CH53(object):
 
     @property
     def main_rotor(self):
-        return UserSpecified(i_input=Inertia(33737.88, 33737.88, 67475.76),
+        return UserSpecified(i_input=Inertia(33737.88, 33737.88, 67474.18),
                              mass=1524.446,
                              position=Point(6.47, 0, 4.845),
                              reference=self.cg)
