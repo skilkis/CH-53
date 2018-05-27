@@ -3,7 +3,7 @@
 #  The units are customary, and are given next to the variables.
 
 from math import pi, exp
-
+__author__ = ['Nelson Johnson']
 
 def lbs_to_kg(kg, power=1):
     """ A function to convert pounds to kg
