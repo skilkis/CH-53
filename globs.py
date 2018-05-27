@@ -47,14 +47,12 @@ DL = W/(pi*R**2)
 # print 'Disk Loading =', DL, '[N/m^2]'
 
 #  Calc Tip Mach Number
-#  TODO Figure this and C_dp bar out pg 30 reader.
 a_inf = sqrt(1.4*287.1*T_inf)       #  Freestream Speed of Sound
 V_t = omega*R
 M_t = V_t/a_inf                     #  Tip Mach number
 
 print 'Tip Mach Number', M_t
 
-#  TODO FIND THIS FINAL/APPLICABLE VALUE BY ESTIMATING C_L BAR (REGRESSION WITH W/piR**2). THEN CDP FROM PG 30.
 C_dp = 0.0251     #  Blade average drag coefficient
 
 #  Equivalent Flat Plate Area

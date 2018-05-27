@@ -199,7 +199,7 @@ W_18 = -71.875 + 0.111*S_b + 3.489*(N_p + N_c)
 WF_18 = W_18/W_oe*100
 
 #  Payload [lb]
-W_pl = 11500  # Adjusted to ensure Gross-Weight not exceeded
+W_pl = 14000  # Adjusted to ensure Gross-Weight not exceeded
 WF_pl = W_pl/W_oe*100
 
 #  Fuel Weight
