@@ -44,7 +44,7 @@ def medium_lift_coef(disk_loading=350, plot=True):
     # Switch-case to allow for accessing the function w/o plotting
     if plot:
         _working_dir = os.getcwd()  # Added for save functionality
-        fig = plt.figure('MediumLiftCoeficient')
+        fig = plt.figure('MediumLiftCoefficient')
         plt.style.use('ggplot')
         plt.title('Medium Lift Coefficient as a Function of Disk Loading')
 
