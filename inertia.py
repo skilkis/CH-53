@@ -3,7 +3,7 @@
 
 """ A file containing all relevant component shapes """
 
-__author__ = "Şan Kılkış"
+__author__ = ["San Kilkis"]
 
 
 class Point(object):

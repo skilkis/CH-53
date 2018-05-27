@@ -5,7 +5,7 @@
 from inertia import *
 import matplotlib.pyplot as plt
 
-__author__ = "Şan Kılkış"
+__author__ = ["San Kilkis"]
 
 
 class CH53(object):
@@ -197,7 +197,7 @@ class CH53(object):
                           mass=1085.402,
                           position=Point(6.38, 0, 3.06),
                           reference=self.cg,
-                          orientation='yxz')
+                          orientation='xyz')
 
     @property
     def main_v_drive(self):
@@ -303,7 +303,7 @@ class CH53(object):
 
 if __name__ == '__main__':
     cg = CH53().get_cg()
-    obj = CH53(center_of_gravity=cg)
+    obj = CH53(center_of_gravity=Point(6.685083, 0.036687, 2.793424))
     del cg
     print obj.get_cg()
     print obj.get_inertia()

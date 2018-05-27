@@ -52,6 +52,7 @@ V_t = omega*R
 M_t = V_t/a_inf                     #  Tip Mach number
 
 print 'Tip Mach Number', M_t
+print W
 
 C_dp = 0.0251     #  Blade average drag coefficient
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-__author__ = "Şan Kılkış"
+__author__ = ["San Kilkis"]
 
 from globs import *
 import numpy as np
@@ -17,6 +17,9 @@ _working_dir = os.getcwd()  # Added for save functionality
 
 # Calculation of the Non-Dimentionlized Velocity
 v_i_hover = sqrt(W/(2*rho*pi*(R**2)))
+
+print v_i_hover
+
 V = np.linspace(1, 100, N)  # in [m/s]
 V_bar = V/v_i_hover
 
@@ -131,7 +134,15 @@ v_i_func = interp1d(V, induced_velocity, fill_value='extrapolate')
 
 plt.title('Induced Velocity as a Function of Forward Velocity')
 plt.xlabel(r'Non-Dimensional Velocity $\overline{V}=\frac{\mu}{\sqrt{C_T/2}}$')
-plt.ylabel(r'Non-Dimensional Induced Velocity $\overline{v}_i$')
+plt.ylabel(r'Non-Dimensional Induced Velocity $\overline{v}_i$', )
+plt.axvline(V_bar[idx], ymax=v_i_func(V[idx])/v_i_hover, linestyle=':', color='k', alpha=0.5)
+plt.plot(V_bar_cr, v_i_func(V_cr)/v_i_hover,
+         marker='o',
+         markerfacecolor='white',
+         markeredgecolor='black', markeredgewidth=1,
+         linewidth=0,
+         label=r'Cruise Condition ($\overline{V}_{cr}=$ %0.1f [-], $\overline{v}_i$ = %0.3f [deg])'
+               % (V_bar_cr, v_i_func(V_cr)/v_i_hover))
 plt.axis([0, 7, 0, 1.0])
 plt.legend(loc='best')
 plt.show()
