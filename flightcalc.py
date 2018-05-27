@@ -21,7 +21,7 @@ print 'Question 4-1: Hover ACT Induced Velocity = ',v_i_ACT, 'm/s'
 
 
 #  Question 5-4: Calculate the Helicopter Ideal Power in ACT theory
-P_i_ACT = W * v_i_ACT                   #  Ideal Power ACT [W]
+P_i_ACT = W * v_i_ACT  # Ideal Power ACT [W]
 print 'Question 5-4: ACT Ideal Hover Power = ', P_i_ACT, 'W'
 
 #  Question 5-5: Calculate the hover power in ACT theory
