@@ -5,8 +5,6 @@
 
 __author__ = "Şan Kılkış"
 
-# TODO Re-upload final version to Overleaf due to the change
-
 
 class Point(object):
     """ A simple class to define a point """
