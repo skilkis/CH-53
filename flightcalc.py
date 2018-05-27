@@ -6,19 +6,10 @@ __author__ = ['Nelson Johnson']
 
 import matplotlib.pyplot as plt
 from globs import *
-from inducedvelocity import v_i_func, v_i_tr_func
-
-#  Question 4-1: Hover induced velocity using ACT theory
-v_i_ACT = sqrt(W / (2 * pi * rho * R ** 2))
-print 'Question 4-1: Hover ACT Induced Velocity = ',v_i_ACT, 'm/s'
-
-#  TODO  Question 4-2:
-
-#  TODO Question 4-3:
-
+from inducedvelocity import v_i_func, v_i_tr_func, v_i_hover
 
 #  Question 5-4: Calculate the Helicopter Ideal Power in ACT theory
-P_i_ACT = W * v_i_ACT                   #  Ideal Power ACT [W]
+P_i_ACT = W * v_i_hover                   #  Ideal Power ACT [W]
 print 'Question 5-4: ACT Ideal Hover Power = ', P_i_ACT, 'W'
 
 #  Question 5-5: Calculate the hover power in ACT theory
@@ -29,7 +20,7 @@ print 'Hover ACT Power Loading = ', PL_ACT, 'N/W'
 
 
 #  Question 5-6: Hover Power BEM theory
-P_i_BEM = k*W*v_i_ACT
+P_i_BEM = k * W * v_i_hover
 P_p_BEM = ((psi*C_dp)/8.0)*((rho*(omega*R)**3)*pi*R**2)
 P_hov_BEM = P_i_BEM+P_p_BEM
 PL_BEM = W / P_hov_BEM
@@ -41,18 +32,25 @@ print 'Hover BEM Power Loading = ', PL_BEM, 'N/W'
 #  of the reader.
 V = V_cr                        #  Flight Velocity
 u = V/(omega*R)                 #  Tip Speed Ratio
-v_i_hispeed = W/(2*pi*(R**2)*rho*V)                                             #  High speed induuced velocity
-V_bar = V/v_i_hispeed             #  Non-Dimensionalized Velocity
-v_i_bar = 1/V_bar
+v_i_hispeed = v_i_func(V)                                             #  High speed induuced velocity
+
 #P_i_fwd = k*W*(sqrt((-(V_bar**2)/2.0)+sqrt(((V_bar**4)/4)+1)))*v_i_ACT         #  Induced PWR FWD Flight (low speed)
-P_i_fwd = k*W*v_i_bar*v_i_hispeed                                                 #  Induced PWR FWD Flight (high speed)
+P_i_fwd = k*W*v_i_hispeed                                                 #  Induced PWR FWD Flight (high speed)
 P_p_fwd = ((psi*C_dp)/8.0)*rho*((omega*R)**3)*pi*(R**2)*(1+(4.65*(u**2)))       #  Profile PWR FWD Flight
 P_par_fwd = sum_cds*0.5*rho*(V**3)                                              #  Parasite Drag PWR FWD Flight
 P_t0 = P_i_fwd + P_p_fwd+ P_par_fwd
 
+# Tail Rotor pawer at V_cr
+T_tr_v = P_t0/(omega*l_tr)
+v_i_hover_tr_v = sqrt(T_tr_v/(2*pi*rho*(R_tr**2)))
+V_bar_tr_v = V/v_i_hover_tr_v
+v_i_tr_v = v_i_tr_func(V_bar_tr_v) * v_i_hover_tr_v
+P_i_tr_v = 1.1*k_tr*T_tr_v*v_i_tr_v
+mu_tr_v = V/(omega_tr*R_tr)
+P_p_tr_v = ((psi_tr*C_dp)/8.0)*rho*((omega_tr*R_tr)**3)*pi*R_tr**2 * (1+4.65*(mu_tr_v**2))
 
-
-print 'Question 5-7: The Total Power If Forward Flight at V=', V, 'm/s is ', P_t0, 'W'
+print 'Question 5-7: The Power In Forward Flight at V=', V, 'm/s is ', P_t0, 'W'
+print 'Question 5-8: The Tail Rotor Power In Forward Flight at V=', V, 'm/s is ', (P_i_tr_v+P_p_tr_v), 'W'
 
 C_T = W / (rho * pi * (R ** 2) * ((omega * R) ** 2))
 
@@ -182,3 +180,5 @@ plt.show()
 
 
 print 'Blade Solidity', psi
+
+
