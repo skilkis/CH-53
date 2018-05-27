@@ -7,6 +7,8 @@ __author__ = ['Nelson Johnson']
 import matplotlib.pyplot as plt
 from globs import *
 from inducedvelocity import v_i_func, v_i_tr_func, v_i_hover
+import os
+_working_dir = os.getcwd()
 
 #  Question 5-4: Calculate the Helicopter Ideal Power in ACT theory
 P_i_ACT = W * v_i_hover                   #  Ideal Power ACT [W]
@@ -69,7 +71,6 @@ P_p_fwd_loop = []
 P_par_fwd_loop = []
 P_fwd_loop = []
 
-#  TODO finalize max speed in this loop.
 for i in range(0, 200, 1):
     V_loop.append(i)
     u = V_loop[i] / (omega * R)
@@ -112,13 +113,15 @@ for i in range(0, len(V_loop)):
 
     P_tr.append(P_i_tr_lst[i]+P_p_tr)
 
-fig = plt.figure('TailRotorPower')
+
+fig = plt.figure('TailRotorPower', figsize=(8, 3), dpi=80)
 plt.style.use('ggplot')
 plt.plot(V_loop, [pwr / 1000 for pwr in P_tr])
 plt.title('Tail Rotor Power as a Function of Forward Flight Velocity')
-plt.xlabel('Flight Speed [m/s]')
+plt.xlabel(r'True Airspeed $V_{\mathrm{TAS}}$ [m/s]')
 plt.ylabel('Power [kW]')
 plt.show()
+fig.savefig(fname=os.path.join(_working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
 
 print 'Question 5-8: Tail Rotor Power using BEM is shown in plot as a function of V'
 print 'Question 5-9: Power Required components are shown in plot as a function of V'
@@ -127,8 +130,23 @@ print 'Question 5-9: Power Required components are shown in plot as a function o
 #  V_emax = V(P_min)
 #  V_Rmax = V(????)
 
-P_misc_frac = 1.07 # W4_L08_P2dem_forward flight power.pptx.pdf
+P_misc_frac = 1.07  # W4_L08_P2dem_forward flight power.pptx.pdf
 P_tot = [(P_fwd_loop[V] + P_tr[V])*P_misc_frac for V in range(0, len(V_loop))]
+
+fig = plt.figure('PowervsAirspeed')
+plt.style.use('ggplot')
+plt.plot(V_loop, [pwr / 1000 for pwr in P_i_fwd_loop], label='Rotor Induced Power')
+plt.plot(V_loop, [pwr / 1000 for pwr in P_p_fwd_loop], label='Rotor Profile Power')
+plt.plot(V_loop, [pwr / 1000 for pwr in P_par_fwd_loop], label='Rotor Parasitic Power')
+plt.plot(V_loop, [pwr / 1000 for pwr in P_tr], label='Tail Rotor (Induced and Profile) Power')
+plt.plot(V_loop, [pwr / 1000 for pwr in P_tot], label='Total Power', linestyle='-.')
+
+plt.title('Maximum Range and Maximum Endurance Airspeeds')
+plt.xlabel(r'True Airspeed $V_{\mathrm{TAS}}$ [m/s]')
+plt.ylabel('Power [kW]')
+plt.legend()
+plt.show()
+fig.savefig(fname=os.path.join(_working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
 
 # P_tot_func = interp1d(V_loop, P_tot, 'linear', fill_value='extrapolate')
 # val = minimize(P_tot_func)
@@ -148,16 +166,14 @@ idx_max_endurance = P_tot.index(min(P_tot))
 
 V_max_endurance = V_loop[idx_max_endurance]
 
-#  Plot the power components :)
+fig = plt.figure('Speeds')
 plt.style.use('ggplot')
-plt.plot(V_loop, [pwr / 1000 for pwr in P_i_fwd_loop], label='Rotor Induced Power')
-plt.plot(V_loop, [pwr / 1000 for pwr in P_p_fwd_loop], label='Rotor Profile Power')
-plt.plot(V_loop, [pwr / 1000 for pwr in P_par_fwd_loop], label='Rotor Parasitic Power')
-plt.plot(V_loop, [pwr / 1000 for pwr in P_tr], label='Tail Rotor (induced and profile) Power')
-plt.plot(V_loop, [pwr / 1000 for pwr in P_tot], label='Total Power', linestyle='-.')
-plt.plot([0, V_max_range, V_loop[-1]], [0, P_tot[idx_max_range]/1000, V_loop[-1]*slope[idx_max_endurance]/1000],
-         linestyle='-.',
-         color='k')
+plt.plot([0, V_max_range, V_loop[-1]], [0, P_tot[idx_max_range]/1000, V_loop[-1]*slope[idx_max_range]/1000],
+         color='k', alpha=0.3)
+plt.axhline(P_tot[idx_max_endurance]/1000, color='k', alpha=0.3)
+plt.axvline(V_max_endurance, ymin=0, ymax=P_tot[idx_max_endurance], linestyle=':')
+plt.axvline(V_max_range, ymin=0, ymax=P_tot[idx_max_range], linestyle=':')
+plt.plot(V_loop, [pwr / 1000 for pwr in P_tot], label='Total Power', linewidth=2)
 plt.plot(V_max_range, P_tot[idx_max_range]/1000,
          marker='o',
          markerfacecolor='white',
@@ -176,8 +192,7 @@ plt.xlabel('Flight Speed [m/s]')
 plt.ylabel('Power [kW]')
 plt.legend()
 plt.show()
-
-
+fig.savefig(fname=os.path.join(_working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
 
 print 'Blade Solidity', psi
 

@@ -21,7 +21,6 @@ FM = 0.69       #  CH-53 Value of Figure of Merit from Sikorsky Archives
 V_cr_kmh = 278.4        #  Assumed Cruise speed used for tip mach no calculation [kmh]
 V_cr = V_cr_kmh/3.6     #  Cruise speed used for tip mach no calculation [m/s]
 
-
 k = 1.15        #  Assumed k factor for BEM rotor induced power
 k_tr = 1.4      #  Assumed k_tr for tail rotor BEM Power
 c_tr = 0.29     #  Tail Rotor Chord Length
@@ -35,6 +34,8 @@ T_inf = 286.17  #  Freestream Temperature
 
 omega = 19.37    #  Main rotor Rotation rate [rad/s] from sikorsky archives
 
+# Total Engine Power
+P_e = 2926.872 * 2000 # Total Engine Power [W]
 
 #  Calculate Main Rotor Blade Solidity (psi)
 psi = (n*c)/(pi*R)
@@ -50,8 +51,6 @@ DL = W/(pi*R**2)
 a_inf = sqrt(1.4*287.1*T_inf)       #  Freestream Speed of Sound
 V_t = omega*R
 M_t = V_t/a_inf                     #  Tip Mach number
-
-print 'Tip Mach Number', M_t
 
 C_dp = 0.0251     #  Blade average drag coefficient
 

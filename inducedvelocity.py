@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-__author__ = "Şan Kılkış"
+__author__ = ["San Kilkis"]
 
 from globs import *
 import numpy as np
@@ -17,6 +17,7 @@ _working_dir = os.getcwd()  # Added for save functionality
 
 # Calculation of the Non-Dimentionlized Velocity
 v_i_hover = sqrt(W/(2*rho*pi*(R**2)))
+
 V = np.linspace(1, 100, N)  # in [m/s]
 V_bar = V/v_i_hover
 
@@ -117,8 +118,40 @@ plt.plot(V_bar[:idx+1], v_i_lowspeed[:idx+1], label=r'Low-Speed')
 # High-Speed Region
 plt.plot(V_bar[idx:], v_i_highspeed[idx:], label='High-Speed')
 
+induced_velocity = [v * v_i_hover for v in v_i]
+v_i_func = interp1d(V, induced_velocity, fill_value='extrapolate')
+
+plt.title('Induced Velocity as a Function of Forward Velocity')
+plt.xlabel(r'Non-Dimensional Velocity $\overline{V}=\frac{\mu}{\sqrt{C_T/2}}$')
+plt.ylabel(r'Non-Dimensional Induced Velocity $\overline{v}_i$', )
+plt.axvline(V_bar[idx], ymax=v_i_func(V[idx])/v_i_hover, linestyle=':', color='k', alpha=0.5)
+plt.plot(V_bar_cr, v_i_func(V_cr)/v_i_hover,
+         marker='o',
+         markerfacecolor='white',
+         markeredgecolor='black', markeredgewidth=1,
+         linewidth=0,
+         label=r'Cruise Condition ($\overline{V}_{cr}=$ %0.1f [-], $\overline{v}_i$ = %0.3f [-])'
+               % (V_bar_cr, v_i_func(V_cr)/v_i_hover))
+plt.axis([0, 7, 0, 1.0])
+plt.legend(loc='best')
+plt.show()
+fig.savefig(fname=os.path.join(_working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
+
+fig = plt.figure('InducedVelocityvsVNum')
+plt.style.use('ggplot')
+
+# Dashed Line to Indicate
+plt.plot(V_bar[:idx+1], v_i_highspeed[:idx+1], linestyle='-.', color='k', alpha=0.5)
+
+# Low-Speed Region
+plt.plot(V_bar[:idx+1], v_i_lowspeed[:idx+1], label=r'Low-Speed')
+
+# High-Speed Region
+plt.plot(V_bar[idx:], v_i_highspeed[idx:], label='High-Speed')
+
 # No Assumptions:
-# plt.plot(V_bar, v_i, label='Numerical Solution', marker='o')
+plt.plot(V_bar, v_i, label='Numerical Solution', marker='x',
+         linewidth=0, markeredgecolor='orange')
 
 # Obtaining Values for Haffner Diagram Check at Cruise Speed (Question 4-3)
 haffner_x = V_bar_cr * cos(alpha_rad_cr)
@@ -131,7 +164,15 @@ v_i_func = interp1d(V, induced_velocity, fill_value='extrapolate')
 
 plt.title('Induced Velocity as a Function of Forward Velocity')
 plt.xlabel(r'Non-Dimensional Velocity $\overline{V}=\frac{\mu}{\sqrt{C_T/2}}$')
-plt.ylabel(r'Non-Dimensional Induced Velocity $\overline{v}_i$')
+plt.ylabel(r'Non-Dimensional Induced Velocity $\overline{v}_i$', )
+plt.axvline(V_bar[idx], ymax=v_i_func(V[idx])/v_i_hover, linestyle=':', color='k', alpha=0.5)
+plt.plot(V_bar_cr, v_i_func(V_cr)/v_i_hover,
+         marker='o',
+         markerfacecolor='white',
+         markeredgecolor='black', markeredgewidth=1,
+         linewidth=0,
+         label=r'Cruise Condition ($\overline{V}_{cr}=$ %0.1f [-], $\overline{v}_i$ = %0.3f [-])'
+               % (V_bar_cr, v_i_func(V_cr)/v_i_hover))
 plt.axis([0, 7, 0, 1.0])
 plt.legend(loc='best')
 plt.show()
