@@ -97,6 +97,5 @@ class Compound(object):
 
 if __name__ == '__main__':
     obj = Compound()
-    print obj.get_inertia()
-    print obj.cg
+    print obj
 

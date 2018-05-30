@@ -3,7 +3,6 @@
 """ This file contains the class definition used to estimate the Mass Moment of Inertia of the CH53 Helicopter """
 
 from inertia import *
-import matplotlib.pyplot as plt
 
 __author__ = ["San Kilkis"]
 
