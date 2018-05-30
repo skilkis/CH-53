@@ -223,5 +223,4 @@ class CH53(Compound):
 
 if __name__ == '__main__':
     obj = CH53()
-    print obj.cg
-    print obj.get_inertia()
+    print obj

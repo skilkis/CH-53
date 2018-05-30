@@ -13,6 +13,15 @@ class Compound(object):
     def __init__(self, center_of_gravity=Point(0, 0, 0)):
         self.cg = center_of_gravity
 
+    def __repr__(self):
+        return "%s Inertia(%f, %f, %f) about C.G. Point(%f, %f, %f)" % (self.__class__.__name__,
+                                                                        self.get_inertia().xx,
+                                                                        self.get_inertia().yy,
+                                                                        self.get_inertia().zz,
+                                                                        self.cg.x,
+                                                                        self.cg.y,
+                                                                        self.cg.z)
+
     def get_cg(self):
         """ Utilizes the class-method `get_children` to iterate through all of the objects in order to find the C.G.
 
@@ -46,7 +55,7 @@ class Compound(object):
 
         return Point(cg_x, cg_y, cg_z)
 
-    def updated_cg(self):
+    def pass_two(self):
         """ Due to circular reference, the c.g. of the current object instance is passed to a new object instance of w/
         the correct c.g. location to calculate the correct inertia, in the case that the c.g. has not changed then the
         current object instance is passed so that performance is increased.
@@ -58,7 +67,7 @@ class Compound(object):
         if self.get_cg().x == 0 and self.get_cg().y == 0 and self.get_cg().z == 0:
             new_obj = self
         else:
-            self.cg = self.get_cg()
+            setattr(self, 'cg', self.get_cg())
             new_obj = self.__class__(center_of_gravity=self.cg)
         return new_obj
 
@@ -71,7 +80,7 @@ class Compound(object):
         i_xx = 0
         i_yy = 0
         i_zz = 0
-        for child in self.updated_cg().get_children():
+        for child in self.pass_two().get_children():
             fetched_object = child.__get__(self)
             if hasattr(fetched_object, 'i'):
                 i = getattr(fetched_object, 'i')
@@ -88,6 +97,6 @@ class Compound(object):
 
 if __name__ == '__main__':
     obj = Compound()
-    print obj.get_cg()
     print obj.get_inertia()
+    print obj.cg
 
