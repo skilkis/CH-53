@@ -8,10 +8,7 @@ import matplotlib.pyplot as plt
 __author__ = ["San Kilkis"]
 
 
-class CH53(object):
-
-    def __init__(self, center_of_gravity=Point(0, 0, 0)):
-        self.cg = center_of_gravity
+class CH53(Compound):
 
     @property
     def fuselage(self):
@@ -223,87 +220,8 @@ class CH53(object):
                           reference=self.cg,
                           orientation='zyx')
 
-    def get_cg(self):
-        """ Utilizes the class-method `get_children` to iterate through all of the objects in order to find the C.G.
-
-        :return: Location of the center of gravity in SI meter [m]
-        :rtype: Point
-        """
-        total_mass = 0
-        moment_x = 0
-        moment_y = 0
-        moment_z = 0
-
-        for child in self.get_childen():
-            fetched_object = child.__get__(self)
-            if hasattr(fetched_object, 'mass') and hasattr(fetched_object, 'position'):
-                mass = getattr(fetched_object, 'mass')
-                total_mass = total_mass + mass
-                position = getattr(fetched_object, 'position')
-
-                moment_x = moment_x + mass * position.x
-                moment_y = moment_y + mass * position.y
-                moment_z = moment_z + mass * position.z
-
-        if total_mass is not 0:
-            cg_x = moment_x / total_mass
-            cg_y = moment_y / total_mass
-            cg_z = moment_z / total_mass
-        else:
-            cg_x = 0
-            cg_y = 0
-            cg_z = 0
-
-        return Point(cg_x, cg_y, cg_z)
-
-    def get_inertia(self):
-        """ Utilizes the class-method `get_children` to sum up all component inertias.
-
-        :return: Total Mass Moment of Inertia w.r.t the center of gravity in SI kilogram meter squared [kg m^2]
-        :rtype: Inertia
-        """
-        i_xx = 0
-        i_yy = 0
-        i_zz = 0
-        for child in self.get_childen():
-            fetched_object = child.__get__(self)
-            if hasattr(fetched_object, 'i'):
-                i = getattr(fetched_object, 'i')
-                i_xx = i_xx + i.xx
-                i_yy = i_yy + i.yy
-                i_zz = i_zz + i.zz
-
-        return Inertia(i_xx, i_yy, i_zz)
-
-    def plot_geom(self):
-        fig = plt.figure('ComponentLocation')
-        ax = fig.gca(projection='3d')
-        ax.set_aspect('equal')
-        plt.style.use('ggplot')
-        plt.title('Medium Lift Coefficient as a Function of Disk Loading')
-
-        for child in self.get_childen():
-            fetched_object = child.__get__(self)
-            if hasattr(fetched_object, 'position') and hasattr(fetched_object, 'mass'):
-                position = getattr(fetched_object, 'position')
-                ax.scatter(position.x, position.y, position.z)
-
-        plt.xlabel(r'Disk Loading [N/m$^2$]')
-        plt.ylabel(r'Medium Lift Coefficient [-]')
-        plt.legend(loc='best')
-        plt.ion()
-        plt.show()
-        # fig.savefig(fname=os.path.join(_working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
-        return fig
-
-    @staticmethod
-    def get_childen():
-            return [value for value in vars(CH53).values() if isinstance(value, property)]
-
 
 if __name__ == '__main__':
-    cg = CH53().get_cg()
-    obj = CH53(center_of_gravity=Point(6.685083, 0.036687, 2.793424))
-    del cg
-    print obj.get_cg()
+    obj = CH53()
+    print obj.cg
     print obj.get_inertia()
