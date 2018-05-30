@@ -9,7 +9,7 @@ __author__ = ["San Kilkis"]
 
 class CH53(Compound):
 
-    @property
+    @Part
     def fuselage(self):
         return Box(length=12.5,
                    width=2.68,
@@ -18,7 +18,7 @@ class CH53(Compound):
                    position=Point(7.18, 0, 1.82),
                    reference=self.cg)
 
-    @property
+    @Part
     def fuselage_top_extension(self):
         return Box(length=8.27,
                    width=1.07,
@@ -27,7 +27,7 @@ class CH53(Compound):
                    position=Point(6.085, 0, 3.695),
                    reference=self.cg)
 
-    @property
+    @Part
     def fuselage_side_extension_left(self):
         return Box(length=5.55,
                    width=1.02,
@@ -36,7 +36,7 @@ class CH53(Compound):
                    position=Point(7.685, 1.85, 1.19),
                    reference=self.cg)
 
-    @property
+    @Part
     def fuselage_side_extension_right(self):
         return Box(length=5.55,
                    width=1.02,
@@ -45,7 +45,7 @@ class CH53(Compound):
                    position=Point(7.685, 1.85, 1.19),
                    reference=self.cg)
 
-    @property
+    @Part
     def tail_boom(self):
         return Box(length=5.550,
                    width=1.610,
@@ -54,7 +54,7 @@ class CH53(Compound):
                    position=Point(16.25, 0, 2.675),
                    reference=self.cg)
 
-    @property
+    @Part
     def nose_cone(self):
         return HemiSphere(radius=2.68/2.0,
                           mass=961.7508,
@@ -62,7 +62,7 @@ class CH53(Compound):
                           reference=self.cg,
                           orientation='zyx')
 
-    @property
+    @Part
     def front_landing_gear(self):
         return Cylinder(radius=0.68/2.0,
                         length=0.68,
@@ -71,7 +71,7 @@ class CH53(Compound):
                         reference=self.cg,
                         orientation='yxz')
 
-    @property
+    @Part
     def rear_landing_gear_right(self):
         return Cylinder(radius=0.68/2.0,
                         length=0.68,
@@ -80,7 +80,7 @@ class CH53(Compound):
                         reference=self.cg,
                         orientation='yxz')
 
-    @property
+    @Part
     def rear_landing_gear_left(self):
         return Cylinder(radius=0.68/2.0,
                         length=0.68,
@@ -89,7 +89,7 @@ class CH53(Compound):
                         reference=self.cg,
                         orientation='yxz')
 
-    @property
+    @Part
     def engine_left(self):
         return Cylinder(radius=1.07/2.0,
                         length=3.5,
@@ -97,7 +97,7 @@ class CH53(Compound):
                         position=Point(5.11, 1.655, 3.065),
                         reference=self.cg)
 
-    @property
+    @Part
     def engine_right(self):
         return Cylinder(radius=1.07/2.0,
                         length=3.5,
@@ -105,7 +105,7 @@ class CH53(Compound):
                         position=Point(5.11, -1.655, 3.065),
                         reference=self.cg)
 
-    @property
+    @Part
     def internal_tank_right(self):
         return Box(length=2.97,
                    width=1.02,
@@ -114,7 +114,7 @@ class CH53(Compound):
                    position=Point(7.085, 1.85, 1.19),
                    reference=self.cg)
 
-    @property
+    @Part
     def internal_tank_left(self):
         return Box(length=2.97,
                    width=1.02,
@@ -123,7 +123,7 @@ class CH53(Compound):
                    position=Point(7.085, -1.85, 1.19),
                    reference=self.cg)
 
-    @property
+    @Part
     def external_tank_left(self):
         return Cylinder(radius=0.97/2.0,
                         length=5.6,
@@ -131,7 +131,7 @@ class CH53(Compound):
                         position=Point(7.03, 3.07, 1.115),
                         reference=self.cg)
 
-    @property
+    @Part
     def external_tank_right(self):
         return Cylinder(radius=0.97/2.0,
                         length=5.6,
@@ -139,7 +139,7 @@ class CH53(Compound):
                         position=Point(7.03, -3.07, 1.115),
                         reference=self.cg)
 
-    @property
+    @Part
     def main_hub(self):
         return Cylinder(radius=1.27/2.0,
                         length=2.14,
@@ -148,21 +148,21 @@ class CH53(Compound):
                         reference=self.cg,
                         orientation='yzx')
 
-    @property
+    @Part
     def main_rotor(self):
         return UserSpecified(i_input=Inertia(33737.88, 33737.88, 67474.18),
                              mass=1524.446,
                              position=Point(6.47, 0, 4.845),
                              reference=self.cg)
 
-    # @property
+    # @Part
     # def main_rotor_disk(self):
     #     return Disk(radius=22.14/2.0,
     #                 mass=1524.446,
     #                 position=Point(6.47, 0, 4.845),
     #                 reference=self.cg)
 
-    @property
+    @Part
     def vertical_tail(self):
         return Plate(length=1.46,
                      width=3.36,
@@ -171,7 +171,7 @@ class CH53(Compound):
                      reference=self.cg,
                      orientation='xzy')
 
-    @property
+    @Part
     def horizontal_tail(self):
         return Plate(length=1.46,
                      width=2.720,
@@ -179,7 +179,7 @@ class CH53(Compound):
                      position=Point(19.71, -1.36, 5.5625),
                      reference=self.cg)
 
-    @property
+    @Part
     def tail_rotor(self):
         return Disk(radius=4.8768/2.0,
                     mass=195.3984,
@@ -187,7 +187,7 @@ class CH53(Compound):
                     reference=self.cg,
                     orientation='xzy')
 
-    @property
+    @Part
     def main_h_drive(self):
         return SlenderBar(length=2.680,
                           mass=1085.402,
@@ -195,7 +195,7 @@ class CH53(Compound):
                           reference=self.cg,
                           orientation='xyz')
 
-    @property
+    @Part
     def main_v_drive(self):
         return SlenderBar(length=1.56,
                           mass=631.8013,
@@ -203,7 +203,7 @@ class CH53(Compound):
                           reference=self.cg,
                           orientation='zyx')
 
-    @property
+    @Part
     def tail_h_drive(self):
         return SlenderBar(length=13.770,
                           mass=165.1365,
@@ -211,7 +211,7 @@ class CH53(Compound):
                           reference=self.cg,
                           orientation='xyz')
 
-    @property
+    @Part
     def tail_v_drive(self):
         return SlenderBar(length=2.140,
                           mass=25.66391,

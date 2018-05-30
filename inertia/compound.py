@@ -5,7 +5,11 @@
 from inertia.primitives import *
 
 __author__ = ["San Kilkis"]
-__all__ = ["Compound"]
+
+
+class Part(property):
+    """ Re-names the property decorator as Part to be able to distinguish between built-in class `property` """
+    pass
 
 
 class Compound(object):
@@ -92,7 +96,7 @@ class Compound(object):
 
     @classmethod
     def get_children(cls):
-        return [value for value in vars(cls).values() if isinstance(value, property)]
+        return [value for value in vars(cls).values() if isinstance(value, Part)]
 
 
 if __name__ == '__main__':
