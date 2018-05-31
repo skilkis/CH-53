@@ -6,16 +6,22 @@ __author__ = ["San Kilkis"]
 
 from globs import Constants
 from masses import ComponentWeights
-from aeropy.xfoil_module import *
-import os
-
+from cla_regression import LiftGradient
 
 import numpy as np
 from scipy import integrate
 import matplotlib.pyplot as plt
 
 
-class Test(Constants, ComponentWeights):
+class Test(Constants):
+
+    @property
+    def weights(self):
+        """
+
+        :return: Class definition of
+        """
+        return ComponentWeights()
 
     @property
     def inerta_blade(self):
@@ -24,24 +30,21 @@ class Test(Constants, ComponentWeights):
 
         :return: Mass Moment of Inertia in SI kilogram meter squared [kg m^2]
         """
-        return (1.0/3.0) * self.W_2A * self.R**2
+        return (1.0/3.0) * (self.weights.kg_to_lbs(self.weights.W_2A, power=-1) / self.weights.n) * self.R**2
+
+    @property
+    def lift_gradient(self):
+        return LiftGradient().gradient
+
 
     @property
     def lock_number(self):
-        return 1.0
-
-    @property
-    def airfoil_dir(self):
-
-
-    @property
-    def lift_coefficient(self):
-        return find_coefficients(airfoil='naca0012', alpha=0.0)
+        return (self.rho * self.lift_gradient * self.c * (self.R ** 4)) / self.inerta_blade
 
 
 if __name__ == '__main__':
     x = Test()
-    print x.lift_coefficient
+    print x.lock_number
 
 
 

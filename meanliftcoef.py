@@ -9,7 +9,7 @@ from scipy import optimize
 import matplotlib.pyplot as plt
 import numpy as np
 import os
-from globs import DL
+from globs import *
 
 
 def medium_lift_coef(disk_loading=350, plot=True):
