@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from scipy import optimize
 from math import radians
 
-
+__author__ = ["San Kilkis",'Nelson Johnson']
 
 filename = 'SC1095_data.dat'
 
@@ -70,14 +70,8 @@ class LiftGradient(object):
     def lift_coefficient_alpha0(self):
         return self.regression[1]
 
+
 if __name__ == '__main__':
     obj = LiftGradient()
     print obj
-
-
-
-
-
-
-
 
