@@ -32,9 +32,9 @@ class Constants(object):
     omega_tr_rpm = 699                  #  Tail Rotor Speed [rpm] from sikorsky archives
     omega_tr = (omega_tr_rpm*2*pi)/60.0 #  Tail Rotor Rotational Velocity [rad/s]
 
-    #  Altitude = 304.8m. This is input into a BSc Y1 Python script to get ISA temp and density.
-    rho = 1.1895    # Density kg/m^3
-    T_inf = 286.17  #  Freestream Temperature
+    #  Standard Sea Level Conditions
+    rho = 1.225     # Density kg/m^3
+    T_inf = 288.15  #  Freestream Temperature
 
     omega = 19.37    #  Main rotor Rotation rate [rad/s] from sikorsky archives
 
