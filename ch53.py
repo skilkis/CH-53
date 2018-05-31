@@ -222,4 +222,3 @@ class CH53(Compound):
 
 if __name__ == '__main__':
     obj = CH53()
-    print obj

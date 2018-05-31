@@ -18,6 +18,8 @@ class Compound(object):
         self.cg = center_of_gravity
 
     def __repr__(self):
+        """ Since the representation is always called upon when creating a class, this ensures that the pass_two
+        Center of Gravity (C.G.) will be utilized """
         return "%s Inertia(%f, %f, %f) about C.G. Point(%f, %f, %f)" % (self.__class__.__name__,
                                                                         self.get_inertia().xx,
                                                                         self.get_inertia().yy,

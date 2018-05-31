@@ -78,12 +78,12 @@ class Component(object):
         :return: Mapped Mass Moment of Inertia w.r.t the component center in SI kilogram meter squared [kg m^2]
         """
         _i_transformed = []
-        for i in self.orientation:
-            if i is 'x':
+        for axis in self.orientation:
+            if axis is 'x':
                 _i_transformed.append(self.i_prime.xx)
-            elif i is 'y':
+            elif axis is 'y':
                 _i_transformed.append(self.i_prime.yy)
-            elif i is 'z':
+            elif axis is 'z':
                 _i_transformed.append(self.i_prime.zz)
             else:
                 raise NameError("You have provided a string input that is not one of 'xyz' format")
