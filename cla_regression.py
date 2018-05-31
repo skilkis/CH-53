@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 from scipy import optimize
 from math import radians
 
+__author__ = ["San Kilkis",'Nelson Johnson']
+
 filename = 'SC1095_data.dat'
 
 
