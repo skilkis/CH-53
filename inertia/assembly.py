@@ -12,7 +12,7 @@ class Part(property):
     pass
 
 
-class Compound(object):
+class Assembly(object):
 
     def __init__(self, center_of_gravity=Point(0, 0, 0)):
         self.cg = center_of_gravity
@@ -102,6 +102,6 @@ class Compound(object):
 
 
 if __name__ == '__main__':
-    obj = Compound()
+    obj = Assembly()
     print obj
 

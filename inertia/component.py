@@ -40,7 +40,7 @@ class Component(object):
     :type position: Point
     :param reference: Body Axis System origin (center of gravity (c.g)) w.r.t the global reference system
     :type reference: Point
-    :param orientaton: Mapping variable to orient the shape, Default 'xyz'
+    :param orientation: Mapping variable to orient the shape, Default 'xyz'
     :type: str
 
     """

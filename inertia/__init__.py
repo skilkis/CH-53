@@ -1,1 +1,1 @@
-from compound import *
+from assembly import *

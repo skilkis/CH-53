@@ -7,7 +7,7 @@ from inertia import *
 __author__ = ["San Kilkis"]
 
 
-class CH53(Compound):
+class CH53Inertia(Assembly):
 
     @Part
     def fuselage(self):
@@ -221,4 +221,4 @@ class CH53(Compound):
 
 
 if __name__ == '__main__':
-    obj = CH53()
+    obj = CH53Inertia()
