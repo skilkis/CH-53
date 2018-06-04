@@ -1,5 +1,6 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# from components import Battery
+
 """ This file contains the class definition used to estimate the Mass Moment of Inertia of the CH53 Helicopter """
 
 __author__ = ["San Kilkis"]
@@ -13,13 +14,13 @@ from scipy import integrate
 import matplotlib.pyplot as plt
 
 
-class Test(Constants):
+class HoverFlapping(Constants):
 
     @property
     def weights(self):
-        """
+        """ Intantiates the Weight Estimating Relationships class to be accessed by the rest of the class
 
-        :return: Class definition of
+        :return: Class containing all Component Weights
         """
         return ComponentWeights()
 
@@ -30,21 +31,23 @@ class Test(Constants):
 
         :return: Mass Moment of Inertia in SI kilogram meter squared [kg m^2]
         """
-        return (1.0/3.0) * (self.weights.kg_to_lbs(self.weights.W_2A, power=-1) / self.weights.n) * self.R**2
+        return (1.0/3.0) * \
+               (self.weights.kg_to_lbs(self.weights.W_2A, power=-1) /
+                self.main_rotor.blade_number) * self.main_rotor.radius**2
 
     @property
     def lift_gradient(self):
         return LiftGradient().gradient
 
-
     @property
     def lock_number(self):
-        return (self.rho * self.lift_gradient * self.c * (self.R ** 4)) / self.inerta_blade
+        return (self.rho * self.lift_gradient * self.main_rotor.chord * (self.main_rotor.radius ** 4)) \
+               / self.inerta_blade
 
 
 if __name__ == '__main__':
-    x = Test()
-    print x.lock_number
+    obj = HoverFlapping()
+    print obj.lock_number
 
 
 
