@@ -18,10 +18,8 @@ from basic_units import radians as rad_ticks  # Renaming to remove conflict with
 
 
 class Attribute(object):
-    '''
-    meant to be used for lazy evaluation of an object attribute.
-    property should represent non-mutable data, as it replaces itself.
-    '''
+    """ A decorator that is used for lazy evaluation of an object attribute.
+    property should represent non-mutable data, as it replaces itself. """
 
     def __init__(self, fget):
         self.fget = fget
@@ -42,7 +40,7 @@ class HoverFlapping(Constants):
 
     @Attribute
     def weights(self):
-        """ Intantiates the Weight Estimating Relationships class to be accessed by the rest of the class
+        """ Instantiates the Weight Estimating Relationships class to be accessed by the rest of the class
 
         :return: Class containing all Component Weights
         """
@@ -61,16 +59,27 @@ class HoverFlapping(Constants):
 
     @Attribute
     def lift_gradient(self):
+        """ Lift coefficient gradient of the CH-53D main rotor (SC1095 Airfoil)
+
+        :return: Lift Coefficient Gradient in SI one over radians [1/rad]
+        """
         return LiftGradient().gradient
 
     @Attribute
     def lock_number(self):
+        """ Represents the ratio of aerodynamic excitation forces to the inertial forces on the blade
+
+        :return: Non-Dimensional Lock Number [-]
+        """
         return (self.rho * self.lift_gradient * self.main_rotor.chord * (self.main_rotor.radius ** 4)) \
-               / self.inertia_blade
-        # return 17.0
+                / self.inertia_blade
 
     @Attribute
     def hover_induced_velocity(self):
+        """
+
+        :return: Hover Induced Velocity in SI meter per second [m/s]
+        """
         return sqrt(self.weight_mtow/(2*self.rho*pi*(self.main_rotor.radius ** 2)))
 
     @Attribute
