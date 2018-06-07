@@ -109,7 +109,7 @@ fig = plt.figure('InducedVelocityvsV')
 plt.style.use('ggplot')
 ax = fig.gca()
 
-# Dashed Line to Indicate
+# Dashed Line to Indicate Numerical Solution
 plt.plot(V_bar[:idx+1], v_i_highspeed[:idx+1], linestyle='-.', color='k', alpha=0.5)
 
 # Low-Speed Region

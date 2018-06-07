@@ -12,9 +12,10 @@ from cla_regression import LiftGradient
 import numpy as np
 from scipy import integrate
 from scipy.interpolate import interp1d
+from scipy.optimize import fsolve
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
-from math import radians, sqrt, pi, degrees, cos, sin
+from math import radians, sqrt, pi, degrees, cos, sin, asin
 from basic_units import radians as rad_ticks  # Renaming to remove conflict with built-in package
 import os  # Necessary to determining the current working directory to save figures
 
@@ -37,13 +38,17 @@ class Attribute(object):
         return value
 
 
-class HoverFlapping(Constants):
+class ForwardFlapping(Constants):
     """ Defines the Flapping Dynamics of the CH-53D in Hovering Flight.
 
     :param collective_pitch: Collective Pitch of the Main Rotor Blades in SI radian [rad]"""
 
-    def __init__(self, collective_pitch=radians(8)):
+    def __init__(self, collective_pitch=radians(8), lateral_cyclic=radians(1),
+                 longitudinal_cyclic=radians(2), velocity=20):
         self.collective_pitch = collective_pitch
+        self.lateral_cyclic = lateral_cyclic
+        self.longitudinal_cyclic = longitudinal_cyclic
+        self.velocity = velocity
 
     @Attribute
     def weights(self):
@@ -90,17 +95,70 @@ class HoverFlapping(Constants):
         return sqrt(self.weight_mtow/(2*self.rho*pi*(self.main_rotor.radius ** 2)))
 
     @Attribute
+    def disk_aoa(self):
+        """ Disk Angle of Attack (AoA) described as the angular distance between the velocity vector and the Tip Path
+        Plane (TPP) """
+        parasitic_drag = self.flat_plate_area * self.rho * (self.velocity ** 2)
+        return asin(parasitic_drag / self.weight_mtow)
+
+    @Attribute
+    def induced_velocity(self):
+        v_bar = self.velocity / self.hover_induced_velocity
+
+        def func(x):
+            """ Defines a 2-th order equation function (V*sin(a) + v_i)**2 + (V*cos(a))**2 - (1/v_i)**2 = 0
+
+            :param x: Represents the Non-Dimensional Induced Velocity
+            """
+            return ((v_bar * sin(self.disk_aoa) + abs(x)) ** 2 + (v_bar * cos(self.disk_aoa)) ** 2) - (
+                    1 / (abs(x) ** 2))
+
+        return abs(fsolve(func, x0=np.array([1]))[0]) * self.hover_induced_velocity
+
+    @Attribute
+    def control_aoa(self):
+        """ Control Plane (CP) Angle of Attack (AoA) described as the angular distance between the velocity vector and
+        the CP """
+        alpha_d = self.disk_aoa
+        theta_lc = self.longitudinal_cyclic
+        theta = self.collective_pitch
+        v = self.velocity
+        omega = self.main_rotor.omega
+        r = self.main_rotor.radius
+        lambda_i = self.inflow_ratio
+
+        def func(x):
+            mu = (v * cos(x)) / (omega * r)
+
+            return x - alpha_d - theta_lc + (((8. / 3.) * mu * theta)
+                                             - 2 * mu * (((v*sin(x))/(omega*r)) + lambda_i)) / (1-(0.5*(mu ** 2)))
+
+        return fsolve(func, x0=np.array([1]))
+
+    @Attribute
+    def advance_ratio(self):
+        return (self.velocity * cos(self.control_aoa)) / (self.main_rotor.omega * self.main_rotor.radius)
+
+    @Attribute
+    def inflow_ratio_control(self):
+        return (self.velocity * sin(self.control_aoa)) / (self.main_rotor.omega * self.main_rotor.radius)
+
+    @Attribute
     def inflow_ratio(self):
-        return self.hover_induced_velocity / (self.main_rotor.omega * self.main_rotor.radius)
+        return self.induced_velocity / (self.main_rotor.omega * self.main_rotor.radius)
 
-    @Attribute
-    def coning_angle(self):
-        """ This parameter presents the steady-state particular solution which is simply a constant value """
-        return (self.lock_number / 8.0) * (self.collective_pitch - ((4.0 * self.inflow_ratio) / 3.0))
+    # @Attribute
+    # def inflow_ratio_hover(self):
+    #     return self.hover_induced_velocity / (self.main_rotor.omega * self.main_rotor.radius)
 
-    @Attribute
-    def aerodynamic_moment(self):
-        return self.coning_angle * (self.main_rotor.omega ** 2)
+    # @Attribute
+    # def coning_angle(self):
+    #     """ This parameter presents the steady-state particular solution which is simply a constant value """
+    #     return (self.lock_number / 8.0) * (self.collective_pitch - ((4.0 * self.inflow_ratio) / 3.0))
+
+    # @Attribute
+    # def aerodynamic_moment(self):
+    #     return self.coning_angle * (self.main_rotor.omega ** 2)
 
     @Attribute
     def initial_condition(self):
@@ -118,10 +176,26 @@ class HoverFlapping(Constants):
 
         omega = self.main_rotor.omega  # Renaming the rotational velocity to make the function definition shorter
         lock = self.lock_number  # Renaming the lock number to make the function definition short
-        m_a = self.aerodynamic_moment  # Renaming the non-zero Aerodynamic Moment forcing term
+        # m_a = self.aerodynamic_moment  # Renaming the non-zero Aerodynamic Moment forcing term
+        theta = self.collective_pitch
+        r = self.main_rotor.radius
+        mu = self.advance_ratio
+        lambda_c = self.inflow_ratio_control
+        lambda_i = self.inflow_ratio
+
+        b_coef = -1*((omega ** 2) * (1 + (lock / 6.0) * mu * cos(omega * t)
+                                        + (lock/8.0) * (mu ** 2) * sin(2*omega*t)))
+
+        b_dot_coef = -1 * ((lock/8.0)*omega*(1+(4.0/3.0) * mu * sin(omega*t)))
+
+        aero_term = (((lock/8.0) * (omega**2) * theta * (1+(mu**2)))
+                     - ((lock/6.0) * (omega**2) * (lambda_c + lambda_i))
+                     + ((lock/8.0) * (omega**2) * mu * sin(omega * t)
+                        * ((8.0/3.0) * theta - (2 * (lambda_c + lambda_i))))
+                     - ((lock/8.0) * (omega**2) * theta * (mu**2) * cos(2*omega*t)))
 
         state_space = [x[1],
-                       -1*((omega ** 2) * x[0]) - ((lock / 8.0) * omega * x[1]) + m_a]
+                       b_coef * x[0] + b_dot_coef * x[1] + aero_term]
 
         return state_space
 
@@ -149,9 +223,21 @@ class HoverFlapping(Constants):
         return (2 * pi) / self.main_rotor.omega
 
     @Attribute
+    def t_initial(self):
+        return (0 * pi) / self.main_rotor.omega
+
+    @Attribute
+    def flap_angle_psi(self):
+        """ Returns a fitted-spline for the angular velocity response of the advancing blade in hover for 1 rev """
+        time_interval = np.linspace(self.t_initial, self.t_final, 1000)
+        rad_interval = [i * self.main_rotor.omega for i in time_interval]
+        sol = self.ode_solver(time_interval, ic=self.initial_condition)[0]
+        return interp1d(rad_interval, sol, kind='slinear')
+
+    @Attribute
     def flap_velocity_psi(self):
         """ Returns a fitted-spline for the angular velocity response of the advancing blade in hover for 1 rev """
-        time_interval = np.linspace(0, self.t_final, 1000)
+        time_interval = np.linspace(self.t_initial, self.t_final, 1000)
         rad_interval = [i * self.main_rotor.omega for i in time_interval]
         sol = self.ode_solver(time_interval, ic=self.initial_condition)[1]
         return interp1d(rad_interval, sol, kind='slinear')
@@ -163,8 +249,12 @@ class HoverFlapping(Constants):
         :param radius: The current radius of the advancing blade element in SI meter [m]
         :return: AoA of the advancing blade element in SI [rad]
         """
-        return self.collective_pitch - ((self.hover_induced_velocity + (self.flap_velocity_psi.__call__(azimuth) *
-                                                                        radius)) / (self.main_rotor.omega * radius))
+        return self.collective_pitch - ((self.velocity * sin(self.control_aoa) + self.induced_velocity +
+                                         (self.flap_velocity_psi.__call__(azimuth) * radius) + self.velocity
+                                         * cos(self.control_aoa) * cos(azimuth)
+                                         * sin(self.flap_angle_psi.__call__(azimuth))) /
+                                        ((self.main_rotor.omega * radius) + self.velocity * cos(self.control_aoa) *
+                                         sin(azimuth)))
 
     def plot_alpha(self):
         azimuth = np.linspace(0, 2*pi, 360)
@@ -185,7 +275,7 @@ class HoverFlapping(Constants):
         cmap_grey = plt.get_cmap('Greys')
         X, Y = np.meshgrid(azimuth, radii)
         # scatter_plot = ax.scatter(X, Y, c=alpha, cmap=cmap)
-        contour_plot = ax.contour(X, Y, alpha, cmap=cmap, vmin=-6, vmax=5)
+        contour_plot = ax.contour(X, Y, alpha, cmap=cmap)
         ax.set_rlabel_position(-22.5)  # get radial labels away from plotted line
         ax.set_theta_zero_location("S")
         ax.set_rlim(0, self.main_rotor.radius)
@@ -260,8 +350,10 @@ class HoverFlapping(Constants):
 
 
 if __name__ == '__main__':
-    obj = HoverFlapping()
+    obj = ForwardFlapping(velocity=20)
 
+    print obj.induced_velocity
+    print degrees(obj.control_aoa)
     # obj.plot_flapangle()
     obj.plot_alpha()
     obj.plot_response()
