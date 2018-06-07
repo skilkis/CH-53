@@ -228,7 +228,7 @@ class ForwardFlapping(Constants):
 
     @Attribute
     def flap_angle_psi(self):
-        """ Returns a fitted-spline for the angular velocity response of the advancing blade in hover for 1 rev """
+        """ Returns a fitted-spline for the angular displacement response of the advancing blade in hover for 1 rev """
         time_interval = np.linspace(self.t_initial, self.t_final, 1000)
         rad_interval = [i * self.main_rotor.omega for i in time_interval]
         sol = self.ode_solver(time_interval, ic=self.initial_condition)[0]
@@ -258,7 +258,7 @@ class ForwardFlapping(Constants):
 
     def plot_alpha(self):
         azimuth = np.linspace(0, 2*pi, 360)
-        radii = np.linspace(3, self.main_rotor.radius, 60)
+        radii = np.linspace(5, self.main_rotor.radius, 60)
 
         fig = plt.figure('BladeAoA')
         plt.style.use('ggplot')
@@ -274,14 +274,14 @@ class ForwardFlapping(Constants):
         cmap = plt.get_cmap('jet')
         cmap_grey = plt.get_cmap('Greys')
         X, Y = np.meshgrid(azimuth, radii)
-        # scatter_plot = ax.scatter(X, Y, c=alpha, cmap=cmap)
-        contour_plot = ax.contour(X, Y, alpha, cmap=cmap)
+        scatter_plot = ax.scatter(X, Y, c=alpha, cmap=cmap)
+        contour_plot = ax.contour(X, Y, alpha, cmap=cmap_grey)
         ax.set_rlabel_position(-22.5)  # get radial labels away from plotted line
         ax.set_theta_zero_location("S")
         ax.set_rlim(0, self.main_rotor.radius)
         ax.grid(True)
         plt.clabel(contour_plot, inline=1, fontsize=10)
-        # plt.colorbar(scatter_plot, shrink=0.8, extend='both')
+        plt.colorbar(scatter_plot, shrink=0.8, extend='both')
 
         ax.set_title("Adv. Blade Element AoA vs. Azimuth and Radius", va='bottom')
         ax.set_xlabel(r'Blade Azimuth $\psi$ [rad]')
@@ -289,43 +289,13 @@ class ForwardFlapping(Constants):
         fig.savefig(fname=os.path.join(_working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
         return 'Plot Created and Saved'
 
-    # def plot_flapangle(self):
-    #     time_interval = np.linspace(0, 1, 1000)
-    #     fig = plt.figure('psivsBeta')
-    #     plt.style.use('ggplot')
-    #     ax = fig.gca()
-    #     sol = self.ode_solver(time_interval, ic=self.initial_condition)[0]
-    #     blade_position = [(t * self.main_rotor.omega) * rad_ticks for t in time_interval]
-    #     ax.plot(blade_position, sol, xunits=rad_ticks)
-    #     plt.title(r'Blade Angular Displacement Response $\beta_0, \dot{\beta}_0 = \left(0, 0\right)$')
-    #     plt.xlabel(r'Blade Azimuth $\psi$ [rad]')
-    #     plt.ylabel(r'Blade Flapping Angle  $\beta_0 = 0$ [rad]')
-    #     plt.show()
-    #     fig.savefig(fname=os.path.join(_working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
-    #     return 'Plot Created and Saved'
-    #
-    # def plot_bladevelocity(self):
-    #     time_interval = np.linspace(0, 1, 1000)
-    #     fig = plt.figure('psivsBeta')
-    #     plt.style.use('ggplot')
-    #     ax = fig.gca()
-    #     sol = self.ode_solver(time_interval, ic=self.initial_condition)[1]
-    #     blade_position = [(t * self.main_rotor.omega) * rad_ticks for t in time_interval]
-    #     ax.plot(blade_position, sol, xunits=rad_ticks)
-    #     plt.title(r'Blade Angular Velocity Response $\beta_0, \dot{\beta}_0 = \left(0, 0\right)$')
-    #     plt.xlabel(r'Blade Azimuth $\psi$ [rad]')
-    #     plt.ylabel(r'Blade Flapping Velocity  $\beta_0 = 0$ [rad/s]')
-    #     plt.show()
-    #     fig.savefig(fname=os.path.join(_working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
-    #     return 'Plot Created and Saved'
-
     def plot_response(self):
         fig = plt.figure('BetaResponse_IC(%1.2f,%1.2f)' % (self.initial_condition[0], self.initial_condition[1]))
         plt.style.use('ggplot')
         gs = gridspec.GridSpec(2, 1, top=0.9)
 
         # Call to ODE Solver for Plot Solution
-        time_interval = np.linspace(0, self.t_final * 2, 1000)
+        time_interval = np.linspace(self.t_initial, self.t_final * 7, 1000)
         sol = self.ode_solver(time_interval, ic=self.initial_condition)
         blade_position = [(t * self.main_rotor.omega) * rad_ticks for t in time_interval]
 
@@ -350,10 +320,7 @@ class ForwardFlapping(Constants):
 
 
 if __name__ == '__main__':
-    obj = ForwardFlapping(velocity=20)
-
-    print obj.induced_velocity
-    print degrees(obj.control_aoa)
+    obj = ForwardFlapping(velocity=50)
     # obj.plot_flapangle()
     obj.plot_alpha()
     obj.plot_response()
