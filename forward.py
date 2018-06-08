@@ -320,10 +320,10 @@ class ForwardFlapping(Constants):
 
 
 if __name__ == '__main__':
-    obj = ForwardFlapping(velocity=50)
+    obj = ForwardFlapping(velocity=20)
     # obj.plot_flapangle()
     obj.plot_alpha()
     obj.plot_response()
     # print obj.inflow_ratio
     # print obj.coning_angle
-    # print obj.lock_number
+    print obj.lock_number
