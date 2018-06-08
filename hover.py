@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-""" This file contains the class definition used to estimate the Mass Moment of Inertia of the CH53 Helicopter """
+""" This file contains the class definition used to estimate the flapping dynamics of the CH53 Helicopter in hover """
 
 __author__ = ["San Kilkis"]
 
@@ -14,7 +14,7 @@ from scipy import integrate
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
-from math import radians, sqrt, pi, degrees, cos, sin
+from math import radians, sqrt, pi, degrees, cos
 from basic_units import radians as rad_ticks  # Renaming to remove conflict with built-in package
 import os  # Necessary to determining the current working directory to save figures
 
@@ -42,8 +42,9 @@ class HoverFlapping(Constants):
 
     :param collective_pitch: Collective Pitch of the Main Rotor Blades in SI radian [rad]"""
 
-    def __init__(self, collective_pitch=radians(8)):
+    def __init__(self, collective_pitch=radians(8), excitation=False):
         self.collective_pitch = collective_pitch
+        self.excitation = excitation
 
     @Attribute
     def weights(self):
@@ -83,7 +84,7 @@ class HoverFlapping(Constants):
 
     @Attribute
     def hover_induced_velocity(self):
-        """
+        """ Taken from the script `inducedvelocity.py` written for the previous assignment
 
         :return: Hover Induced Velocity in SI meter per second [m/s]
         """
@@ -91,20 +92,24 @@ class HoverFlapping(Constants):
 
     @Attribute
     def inflow_ratio(self):
+        """ Represents the non-dimensionalized downwash acting on the blade """
         return self.hover_induced_velocity / (self.main_rotor.omega * self.main_rotor.radius)
 
     @Attribute
     def coning_angle(self):
-        """ This parameter presents the steady-state particular solution which is simply a constant value """
+        """ Represents the steady-state particular solution which is simply a constant value """
         return (self.lock_number / 8.0) * (self.collective_pitch - ((4.0 * self.inflow_ratio) / 3.0))
 
     @Attribute
     def aerodynamic_moment(self):
+        """ Represents the constant aerodynamic moment applied to the blade """
         return self.coning_angle * (self.main_rotor.omega ** 2)
 
     @Attribute
     def initial_condition(self):
-        return [0, 0]
+        """ Initial condition used to solve the system, 0th entry represents angular diplacement \beta and 1st entry
+        represents the angular velocity \dot{\beta}"""
+        return [self.coning_angle, 0]
 
     def ode(self, x, t):
         """ Defines the blade-flapping velocity and acceleration as a function of the blade-flapping deflection and
@@ -119,11 +124,12 @@ class HoverFlapping(Constants):
         omega = self.main_rotor.omega  # Renaming the rotational velocity to make the function definition shorter
         lock = self.lock_number  # Renaming the lock number to make the function definition short
         m_a = self.aerodynamic_moment  # Renaming the non-zero Aerodynamic Moment forcing term
+        one_p = cos(omega * t) if self.excitation else 0  # Constant 1-P excitation during hover
 
-        state_space = [x[1],
-                       -1*((omega ** 2) * x[0]) - ((lock / 8.0) * omega * x[1]) + m_a]
+        system = [x[1],
+                  -1*((omega ** 2) * x[0]) - ((lock / 8.0) * omega * x[1]) + m_a*(1 + one_p)]
 
-        return state_space
+        return system
 
     def ode_solver(self, t, **kwargs):
         """ Solves the differential equation in state-space form defined by `ode_statepace` with the lsoda package
@@ -168,9 +174,11 @@ class HoverFlapping(Constants):
 
     def plot_alpha(self):
         azimuth = np.linspace(0, 2*pi, 360)
-        radii = np.linspace(3, self.main_rotor.radius, 60)
+        radii = np.linspace(0.1, self.main_rotor.radius, 60)
 
-        fig = plt.figure('BladeAoA')
+        suffix = '_1P' if self.excitation else ''
+        fig = plt.figure('BladeAoA__IC(%1.2f,%1.2f)'
+                         % (self.initial_condition[0], self.initial_condition[1]) + suffix)
         plt.style.use('ggplot')
         ax = plt.subplot(111, projection='polar')
 
@@ -181,17 +189,16 @@ class HoverFlapping(Constants):
                 phi = azimuth[j]
                 alpha[i, j] = degrees(self.alpha_psi(phi, r))
 
+        levels = [i for i in np.arange(-5, 6, 1.0)]
         cmap = plt.get_cmap('jet')
         cmap_grey = plt.get_cmap('Greys')
         X, Y = np.meshgrid(azimuth, radii)
-        # scatter_plot = ax.scatter(X, Y, c=alpha, cmap=cmap)
-        contour_plot = ax.contour(X, Y, alpha, cmap=cmap, vmin=-6, vmax=5)
+        contour_plot = ax.contour(X, Y, alpha, cmap=cmap, levels=levels)
         ax.set_rlabel_position(-22.5)  # get radial labels away from plotted line
         ax.set_theta_zero_location("S")
         ax.set_rlim(0, self.main_rotor.radius)
         ax.grid(True)
         plt.clabel(contour_plot, inline=1, fontsize=10)
-        # plt.colorbar(scatter_plot, shrink=0.8, extend='both')
 
         ax.set_title("Adv. Blade Element AoA vs. Azimuth and Radius", va='bottom')
         ax.set_xlabel(r'Blade Azimuth $\psi$ [rad]')
@@ -199,43 +206,15 @@ class HoverFlapping(Constants):
         fig.savefig(fname=os.path.join(_working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
         return 'Plot Created and Saved'
 
-    # def plot_flapangle(self):
-    #     time_interval = np.linspace(0, 1, 1000)
-    #     fig = plt.figure('psivsBeta')
-    #     plt.style.use('ggplot')
-    #     ax = fig.gca()
-    #     sol = self.ode_solver(time_interval, ic=self.initial_condition)[0]
-    #     blade_position = [(t * self.main_rotor.omega) * rad_ticks for t in time_interval]
-    #     ax.plot(blade_position, sol, xunits=rad_ticks)
-    #     plt.title(r'Blade Angular Displacement Response $\beta_0, \dot{\beta}_0 = \left(0, 0\right)$')
-    #     plt.xlabel(r'Blade Azimuth $\psi$ [rad]')
-    #     plt.ylabel(r'Blade Flapping Angle  $\beta_0 = 0$ [rad]')
-    #     plt.show()
-    #     fig.savefig(fname=os.path.join(_working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
-    #     return 'Plot Created and Saved'
-    #
-    # def plot_bladevelocity(self):
-    #     time_interval = np.linspace(0, 1, 1000)
-    #     fig = plt.figure('psivsBeta')
-    #     plt.style.use('ggplot')
-    #     ax = fig.gca()
-    #     sol = self.ode_solver(time_interval, ic=self.initial_condition)[1]
-    #     blade_position = [(t * self.main_rotor.omega) * rad_ticks for t in time_interval]
-    #     ax.plot(blade_position, sol, xunits=rad_ticks)
-    #     plt.title(r'Blade Angular Velocity Response $\beta_0, \dot{\beta}_0 = \left(0, 0\right)$')
-    #     plt.xlabel(r'Blade Azimuth $\psi$ [rad]')
-    #     plt.ylabel(r'Blade Flapping Velocity  $\beta_0 = 0$ [rad/s]')
-    #     plt.show()
-    #     fig.savefig(fname=os.path.join(_working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
-    #     return 'Plot Created and Saved'
-
     def plot_response(self):
-        fig = plt.figure('BetaResponse_IC(%1.2f,%1.2f)' % (self.initial_condition[0], self.initial_condition[1]))
+        suffix = '_1P' if self.excitation else ''
+        fig = plt.figure('BetaResponse_IC(%1.2f,%1.2f)'
+                         % (self.initial_condition[0], self.initial_condition[1]) + suffix)
         plt.style.use('ggplot')
         gs = gridspec.GridSpec(2, 1, top=0.9)
 
         # Call to ODE Solver for Plot Solution
-        time_interval = np.linspace(0, self.t_final * 2, 1000)
+        time_interval = np.linspace(0, self.t_final * 3, 1000)
         sol = self.ode_solver(time_interval, ic=self.initial_condition)
         blade_position = [(t * self.main_rotor.omega) * rad_ticks for t in time_interval]
 
@@ -261,10 +240,11 @@ class HoverFlapping(Constants):
 
 if __name__ == '__main__':
     obj = HoverFlapping()
+    print obj.coning_angle
 
-    # obj.plot_flapangle()
-    obj.plot_alpha()
-    obj.plot_response()
+    # print obj.coning_angle
+    # obj.plot_alpha()
+    # obj.plot_response()
     # print obj.inflow_ratio
     # print obj.coning_angle
     # print obj.lock_number

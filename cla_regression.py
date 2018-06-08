@@ -7,11 +7,13 @@
 import os
 import matplotlib.pyplot as plt
 from scipy import optimize
-from math import radians
+from math import radians, degrees
+import numpy as np
 
 __author__ = ["San Kilkis", 'Nelson Johnson']
 
 airfoil_file = 'SC1095_data.dat'
+_working_dir = os.getcwd()
 
 
 class LiftGradient(object):
@@ -47,38 +49,60 @@ class LiftGradient(object):
 
         return alpha, lift_coefficient
 
+    @staticmethod
+    def func(x, a, b):
+        """ Defines a linear regression function y(x) = a*x + b
+
+        :param x: Value(s) on the x-axis which correspond to the disk_loading
+        :type x: int, float, list
+        :param a: slope
+        :param b: y-intercept """
+        return a * x + b
+
     @property
     def regression(self):
 
-        def func(x, a, b):
-            """ Defines a linear regression function y(x) = a*x + b
-
-            :param x: Value(s) on the x-axis which correspond to the disk_loading
-            :type x: int, float, list
-            :param a: slope
-            :param b: y-intercept """
-            return a * x + b
-
-        params, param_covariance = optimize.curve_fit(func, [radians(deg) for deg in self.alpha],
+        params, param_covariance = optimize.curve_fit(self.func, [radians(deg) for deg in self.alpha],
                                                       self.lift_coefficient)
-        return params
+        return params, param_covariance
 
     @property
     def gradient(self):
-        return self.regression[0]
+        return self.regression[0][0]
 
     @property
     def lift_coefficient_alpha0(self):
-        return self.regression[1]
+        return self.regression[0][1]
 
     def plot_regression(self):
         fig = plt.figure('LiftGradient')
         plt.style.use('ggplot')
-        plt.plot(self.alpha, self.lift_coefficient)
+        plt.scatter(self.alpha, self.lift_coefficient, label='Data')
+
+        gradient = self.gradient / degrees(1)
+        cl_0 = self.lift_coefficient_alpha0
+        xvals = np.linspace(-10, 10, len(self.read_xfoil_data()[0]))
+
+        # Calculating R^2
+        residuals = np.array(self.read_xfoil_data()[1]) - self.func(xvals, gradient, cl_0)
+        ss_res = np.sum(residuals ** 2)
+        ss_tot = np.sum((np.array(self.read_xfoil_data()[1]) - np.mean(np.array(self.read_xfoil_data()[1]))) ** 2)
+        r_squared = float(1 - (ss_res / ss_tot))
+
+        plt.plot(xvals, self.func(xvals, gradient, cl_0),
+                 label=r'Linear Regression:' +
+                       '\n' r'$\bar{C}_L=%f\cdot\mathrm{\alpha} + %f$' % (gradient, cl_0) +
+                       '\n' r'$R^2$ = %0.2f' % r_squared)
+
+
+
         plt.xlabel(r'Angle of Attack [deg]')
         plt.ylabel(r'Lift Coefficient [-]')
         plt.title('Rotor-Blade Lift Coefficient Gradient')
+        plt.legend(loc='best')
+        plt.ion()
         plt.show()
+        fig.savefig(fname=os.path.join(_working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
         return fig
 
 

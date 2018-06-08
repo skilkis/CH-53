@@ -88,7 +88,7 @@ class ForwardFlapping(Constants):
 
     @Attribute
     def hover_induced_velocity(self):
-        """
+        """ Utilizes the ACT Definition from Assignment I to calculate the hover induced velocity
 
         :return: Hover Induced Velocity in SI meter per second [m/s]
         """
@@ -133,10 +133,10 @@ class ForwardFlapping(Constants):
             return x - alpha_d - theta_lc + (((8. / 3.) * mu * theta)
                                              - 2 * mu * (((v*sin(x))/(omega*r)) + lambda_i)) / (1-(0.5*(mu ** 2)))
 
-        return fsolve(func, x0=np.array([1]))
+        return abs(fsolve(func, x0=np.array([1]))[0])
 
     @Attribute
-    def advance_ratio(self):
+    def tip_speed_ratio(self):
         return (self.velocity * cos(self.control_aoa)) / (self.main_rotor.omega * self.main_rotor.radius)
 
     @Attribute
@@ -146,19 +146,6 @@ class ForwardFlapping(Constants):
     @Attribute
     def inflow_ratio(self):
         return self.induced_velocity / (self.main_rotor.omega * self.main_rotor.radius)
-
-    # @Attribute
-    # def inflow_ratio_hover(self):
-    #     return self.hover_induced_velocity / (self.main_rotor.omega * self.main_rotor.radius)
-
-    # @Attribute
-    # def coning_angle(self):
-    #     """ This parameter presents the steady-state particular solution which is simply a constant value """
-    #     return (self.lock_number / 8.0) * (self.collective_pitch - ((4.0 * self.inflow_ratio) / 3.0))
-
-    # @Attribute
-    # def aerodynamic_moment(self):
-    #     return self.coning_angle * (self.main_rotor.omega ** 2)
 
     @Attribute
     def initial_condition(self):
@@ -179,7 +166,7 @@ class ForwardFlapping(Constants):
         # m_a = self.aerodynamic_moment  # Renaming the non-zero Aerodynamic Moment forcing term
         theta = self.collective_pitch
         r = self.main_rotor.radius
-        mu = self.advance_ratio
+        mu = self.tip_speed_ratio
         lambda_c = self.inflow_ratio_control
         lambda_i = self.inflow_ratio
 
@@ -216,6 +203,46 @@ class ForwardFlapping(Constants):
         beta_dot = sol[:, 1]
 
         return beta, beta_dot
+
+    @Attribute
+    def coning_angle(self):
+        """ Returns the Coning Angle SI radians [rad]
+
+        :rtype: float
+        """
+        lock = self.lock_number
+        theta = self.collective_pitch
+        mu = self.tip_speed_ratio
+        lambda_i = self.inflow_ratio
+        lambda_c = self.inflow_ratio_control
+        return (lock / 8.0) * (theta * (1+(mu**2))-(4.0/3.0)*(lambda_i+lambda_c))
+
+    @Attribute
+    def longitudinal_tilt(self):
+        """ Returns the Longitudinal Tilt in SI radians [rad]
+
+        :rtype: float
+        """
+        theta = self.collective_pitch
+        mu = self.tip_speed_ratio
+        lambda_i = self.inflow_ratio
+        lambda_c = self.inflow_ratio_control
+        return (((8.0 / 3.0) * mu * theta) - 2 * mu * (lambda_c + lambda_i)) / (1 - 0.5 * (mu**2))
+
+    @Attribute
+    def lateral_tilt(self):
+        """ Returns the Longitudinal Tilt in SI radians [rad]
+
+        :rtype: float
+        """
+        theta_lc = self.lateral_cyclic
+        mu = self.tip_speed_ratio
+        lambda_i = self.inflow_ratio
+        lambda_c = self.inflow_ratio_control
+        k_prime = (1.33 * (mu / (lambda_c + lambda_i)))/(1.2 + (mu/(lambda_c + lambda_i)))
+
+        return ((4.0/3.0) * mu * self.coning_angle) / ((1 + 0.5 * (mu**2))
+                                                       + (k_prime * lambda_i / (1 + 0.5 * (mu**2)))) + theta_lc
 
     @Attribute
     def t_final(self):
@@ -258,7 +285,7 @@ class ForwardFlapping(Constants):
 
     def plot_alpha(self):
         azimuth = np.linspace(0, 2*pi, 360)
-        radii = np.linspace(5, self.main_rotor.radius, 60)
+        radii = np.linspace(3, self.main_rotor.radius, 60)
 
         fig = plt.figure('BladeAoA')
         plt.style.use('ggplot')
@@ -271,17 +298,18 @@ class ForwardFlapping(Constants):
                 phi = azimuth[j]
                 alpha[i, j] = degrees(self.alpha_psi(phi, r))
 
+        levels = [i for i in np.arange(-1, 8, 1.0)]
         cmap = plt.get_cmap('jet')
         cmap_grey = plt.get_cmap('Greys')
         X, Y = np.meshgrid(azimuth, radii)
-        scatter_plot = ax.scatter(X, Y, c=alpha, cmap=cmap)
-        contour_plot = ax.contour(X, Y, alpha, cmap=cmap_grey)
+        # scatter_plot = ax.scatter(X, Y, c=alpha, cmap=cmap)
+        contour_plot = ax.contour(X, Y, alpha, cmap=cmap, levels=levels)
         ax.set_rlabel_position(-22.5)  # get radial labels away from plotted line
         ax.set_theta_zero_location("S")
         ax.set_rlim(0, self.main_rotor.radius)
         ax.grid(True)
         plt.clabel(contour_plot, inline=1, fontsize=10)
-        plt.colorbar(scatter_plot, shrink=0.8, extend='both')
+        # plt.colorbar(scatter_plot, shrink=0.8, extend='both')
 
         ax.set_title("Adv. Blade Element AoA vs. Azimuth and Radius", va='bottom')
         ax.set_xlabel(r'Blade Azimuth $\psi$ [rad]')
@@ -295,7 +323,7 @@ class ForwardFlapping(Constants):
         gs = gridspec.GridSpec(2, 1, top=0.9)
 
         # Call to ODE Solver for Plot Solution
-        time_interval = np.linspace(self.t_initial, self.t_final * 7, 1000)
+        time_interval = np.linspace(self.t_initial, self.t_final * 2, 1000)
         sol = self.ode_solver(time_interval, ic=self.initial_condition)
         blade_position = [(t * self.main_rotor.omega) * rad_ticks for t in time_interval]
 
@@ -320,10 +348,11 @@ class ForwardFlapping(Constants):
 
 
 if __name__ == '__main__':
-    obj = ForwardFlapping(velocity=50)
-    # obj.plot_flapangle()
-    obj.plot_alpha()
-    obj.plot_response()
-    # print obj.inflow_ratio
-    # print obj.coning_angle
-    # print obj.lock_number
+    obj = ForwardFlapping(velocity=20)
+    print 'Con. Angle = ' + str(degrees(obj.coning_angle))
+    print 'Long. Tilt = ' + str(degrees(obj.longitudinal_tilt))
+    print 'Lat. Tilt = ' + str(degrees(obj.lateral_tilt))
+
+    print 'Con. Angle = ' + str(obj.coning_angle)
+    print 'Long. Tilt = ' + str(obj.longitudinal_tilt)
+    print 'Lat. Tilt = ' + str(obj.lateral_tilt)
