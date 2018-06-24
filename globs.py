@@ -5,6 +5,8 @@
 
 from math import pi, sqrt
 from collections import namedtuple
+from masses import ComponentWeights
+from cla_regression import LiftGradient
 
 # Inputs
 g = 9.81  # Gravitational Acceleration [m/s**2]
@@ -59,37 +61,53 @@ C_dp = 0.0251  # Blade average drag coefficient
 sum_cds = 4.23  # This is the Equivalent Flat Plate Area estimated from pg 52 of reader
 
 
+class Attribute(object):
+    """ A decorator that is used for lazy evaluation of an object attribute.
+    property should represent non-mutable data, as it replaces itself. """
+
+    def __init__(self, fget):
+        self.fget = fget
+        self.func_name = fget.__name__
+
+    def __get__(self, obj, cls):
+        if obj is None:
+            return None
+        value = self.fget(obj)
+        setattr(obj, self.func_name, value)
+        return value
+
+
 class Constants(object):
 
-    """ An OOP Version of the above constants to use for the following part of this assignment, supporting psuedo-lazy
+    """ An OOP Version of the above constants to use for the following part of this assignment, supporting lazy
      evaluation where not every attribute or property will be triggered at run-time, thus increasing performance """
 
-    @property
+    @Attribute
     def g(self):
         """ Gravitational Acceleration in SI meter per second [m /s]"""
         return g
 
-    @property
+    @Attribute
     def rho(self):
         """ Atmospheric Density in SI kilogram per meter cubed [kg/m^3]"""
         return rho
 
-    @property
+    @Attribute
     def temperature(self):
         """ Atmospheric Temperature in SI Kelvin [K] """
         return T_inf
 
-    @property
+    @Attribute
     def mass_mtow(self):
         """ Gross mass of the CH-53 in SI kilogram [kg] """
         return m
 
-    @property
+    @Attribute
     def weight_mtow(self):
         """ Gross weight of the CH-53 in SI Newton [N] """
         return self.mass_mtow * self.g
 
-    @property
+    @Attribute
     def main_rotor(self):
         """ Contains all main-rotor attributes of the CH-53 in SI units """
         main_rotor_tuple = namedtuple('main_rotor', ['diameter',
@@ -102,12 +120,12 @@ class Constants(object):
                                                      'tip_mach'])
         return main_rotor_tuple(D, R, n, c, omega, psi, omega*R, omega*R/self.speed_of_sound)
 
-    @property
+    @Attribute
     def tail_arm(self):
         """ Distance from the main-rotor hub to the tail-rotor hub of the CH-53 in SI meter [m] """
         return l_tr
 
-    @property
+    @Attribute
     def tail_rotor(self):
         """ Contains all tail-rotor attributes of the CH-53 in SI units """
         tail_rotor_tuple = namedtuple('tail_rotor', ['diameter',
@@ -127,47 +145,83 @@ class Constants(object):
                                 omega_tr*R_tr,
                                 omega_tr*R_tr/self.speed_of_sound)
 
-    @property
+    @Attribute
     def figure_of_merit(self):
         """ CH-53 Value of Figure of Merit from Sikorsky Archives """
         return FM
 
-    @property
+    @Attribute
     def cruise_velocity(self):
         return V_cr
 
-    @property
+    @Attribute
     def k_factor(self):
         return k
 
-    @property
+    @Attribute
     def k_factor_tail(self):
         return k_tr
 
-    @property
+    @Attribute
     def power_avaliable(self):
         """ Total Available Engine Power in SI Watt [W] """
         return P_e
 
-    @property
+    @Attribute
     def disk_loading(self):
         """ Disk Loading of the CH-53 in SI Newton per meter squared [N/m^2] """
         return self.weight_mtow / (pi * (self.main_rotor.radius ** 2))
 
-    @property
+    @Attribute
     def speed_of_sound(self):
         """ Freestream Speed of Sound in SI meter per second [m/s] """
         return sqrt(1.4 * 287.1 * self.temperature)
 
-    @property
+    @Attribute
     def average_drag(self):
         """ Blade Average Drag Coefficient """
         return C_dp
 
-    @property
+    @Attribute
     def flat_plate_area(self):
         """ Equivalent Flat Plate Area of estimated from pg. 52 of the reader """
         return sum_cds
+
+    @Attribute
+    def weights(self):
+        """ Instantiates the Weight Estimating Relationships class to be accessed by the rest of the class
+
+        :return: Class containing all Component Weights
+        """
+        return ComponentWeights()
+
+    @Attribute
+    def inertia_blade(self):
+        """ Single blade Mass Moment of Inertia about the flapping hinge assuming that the blade length runs from
+        hub-center to tip.
+
+        :return: Mass Moment of Inertia in SI kilogram meter squared [kg m^2]
+        """
+        return (1.0/3.0) * \
+               (self.weights.kg_to_lbs(self.weights.W_2A, power=-1) /
+                self.main_rotor.blade_number) * self.main_rotor.radius**2
+
+    @Attribute
+    def lift_gradient(self):
+        """ Lift coefficient gradient of the CH-53D main rotor (SC1095 Airfoil)
+
+        :return: Lift Coefficient Gradient in SI one over radians [1/rad]
+        """
+        return LiftGradient().gradient
+
+    @Attribute
+    def lock_number(self):
+        """ Represents the ratio of aerodynamic excitation forces to the inertial forces on the blade
+
+        :return: Non-Dimensional Lock Number [-]
+        """
+        return (self.rho * self.lift_gradient * self.main_rotor.chord * (self.main_rotor.radius ** 4)) \
+               / self.inertia_blade
 
 
 if __name__ == '__main__':

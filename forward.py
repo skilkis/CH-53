@@ -349,10 +349,11 @@ class ForwardFlapping(Constants):
 
 if __name__ == '__main__':
     obj = ForwardFlapping(velocity=20)
-    print 'Con. Angle = ' + str(degrees(obj.coning_angle))
-    print 'Long. Tilt = ' + str(degrees(obj.longitudinal_tilt))
-    print 'Lat. Tilt = ' + str(degrees(obj.lateral_tilt))
 
-    print 'Con. Angle = ' + str(obj.coning_angle)
-    print 'Long. Tilt = ' + str(obj.longitudinal_tilt)
-    print 'Lat. Tilt = ' + str(obj.lateral_tilt)
+    # print 'Con. Angle = ' + str(degrees(obj.coning_angle))
+    # print 'Long. Tilt = ' + str(degrees(obj.longitudinal_tilt))
+    # print 'Lat. Tilt = ' + str(degrees(obj.lateral_tilt))
+    #
+    # print 'Con. Angle = ' + str(obj.coning_angle)
+    # print 'Long. Tilt = ' + str(obj.longitudinal_tilt)
+    # print 'Lat. Tilt = ' + str(obj.lateral_tilt)
