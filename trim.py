@@ -5,7 +5,7 @@
 
 __author__ = ["San Kilkis"]
 
-from globs import *
+from globs import Constants, Attribute
 
 import numpy as np
 from numpy.linalg import inv

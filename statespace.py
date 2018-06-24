@@ -7,7 +7,7 @@
 
 __author__ = ["San Kilkis"]
 
-from globs import Constants
+from globs import Constants, Attribute
 from masses import ComponentWeights
 from cla_regression import LiftGradient
 from ch53_inertia import CH53Inertia
@@ -20,22 +20,6 @@ from math import radians, sqrt, pi, degrees, cos, sin, asin, atan
 import os  # Necessary to determining the current working directory to save figures
 
 _working_dir = os.getcwd()
-
-
-class Attribute(object):
-    """ A decorator that is used for lazy evaluation of an object attribute.
-    property should represent non-mutable data, as it replaces itself. """
-
-    def __init__(self, fget):
-        self.fget = fget
-        self.func_name = fget.__name__
-
-    def __get__(self, obj, cls):
-        if obj is None:
-            return None
-        value = self.fget(obj)
-        setattr(obj, self.func_name, value)
-        return value
 
 
 class StateSpace(Constants):
@@ -154,6 +138,17 @@ class StateSpace(Constants):
         return self.thrust_coefficient_elem(self.inflow_ratio) * self.rho * (omega * r)**2 * pi * r**2
 
     @Attribute
+    def rotor_distance_to_cg(self):
+        """ Computes the z-axis distance of the main-rotor centroid to the center of gravity (C.G) of the CH-53
+
+        :return: Distance of the Main Rotor to the Center of Gravity (C.G.) on the z-axis in SI meter [m]
+        :rtype: float
+        """
+        inertia_instance = CH53Inertia()
+        cg = inertia_instance.get_cg()
+        return abs(cg.z - inertia_instance.main_rotor.position.z)
+
+    @Attribute
     def drag(self):
         return self.flat_plate_area*0.5*self.rho*(self.velocity**2)
 
@@ -170,19 +165,12 @@ class StateSpace(Constants):
                self.q * self.u
 
     @Attribute
-    def rotor_distance_to_cg(self):
-        """ Computes the z-axis distance of the main-rotor centroid to the center of gravity (C.G) of the CH-53
-
-        :return: Distance of the Main Rotor to the Center of Gravity (C.G.) on the z-axis in SI meter [m]
-        :rtype: float
-        """
-        inertia_instance = CH53Inertia()
-        cg = inertia_instance.get_cg()
-        return abs(cg.z - inertia_instance.main_rotor.position.z)
+    def inertia(self):
+        return CH53Inertia().get_inertia()
 
     @Attribute
     def q_dot(self):
-        return (-self.thrust / self.inertia_blade) * self.rotor_distance_to_cg * \
+        return (-self.thrust / self.inertia.yy) * self.rotor_distance_to_cg * \
                sin(self.longitudinal_cyclic - self.longitudinal_disk_tilt)
 
     @Attribute
@@ -206,11 +194,12 @@ class StateSpace(Constants):
 
             # Control Inputs
             if 0.5 < time[i] < 1.0:
-                cyclic_input = radians(1.0)
+                cyclic_input = radians(5.0)
             else:
                 cyclic_input = 0.0
             current_case = StateSpace(u=u[i], w=w[i], q=q[i], theta_f=theta_f[i], longitudinal_cyclic=cyclic_input)
-
+            print current_case.thrust
+            print current_case.inflow_ratio
         # Plotting Numerical Solution
         fig = plt.figure('TrimvsVelocity')
         plt.style.use('ggplot')
@@ -219,9 +208,9 @@ class StateSpace(Constants):
         plt.plot(time, w, label='Vertical Speed')
 
         # Creating Labels & Saving Figure
-        plt.title(r'Control Deflection as a Function of Forward Velocity')
-        plt.xlabel(r'True Airspeed, $V_\mathrm{TAS}$ [m/s]')
-        plt.ylabel(r'Required Control Deflection [deg]')
+        plt.title(r'Response of Speeds vs Time.')
+        plt.xlabel(r'Velocity [m/s]')
+        plt.ylabel(r'Time [s]')
         plt.legend(loc='best')
         plt.show()
         # fig.savefig(fname=os.path.join(_working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
@@ -230,6 +219,6 @@ class StateSpace(Constants):
 
 
 if __name__ == '__main__':
-    obj = StateSpace(u=0.0, w=1.0, q=0, theta_f=radians(0.0), collective_pitch=radians(0.0), longitudinal_cyclic=radians(0.0))
+    obj = StateSpace(u=20.0, w=0.0, q=0, theta_f=radians(0.0), collective_pitch=radians(0.0), longitudinal_cyclic=radians(0.0))
     print obj.inflow_ratio
     print obj.plot_test()
