@@ -118,7 +118,7 @@ class Trim(Constants):
                                                      self.thrust_coef))[0]
 
     @Attribute
-    def trim_solver(self):
+    def numerical_solution(self):
         """ This attribute computes the trim solution at the current forward flight velocity
 
         :returns: Collective Pitch and Longitudinal Cyclic in SI radian [rad]
@@ -131,11 +131,12 @@ class Trim(Constants):
             # Retrieving the Collective Pitch and Longitudinal
             theta0, thetac = variables
 
+            # Retrieving the Passed Arguments
             velocity, alpha_disk, main_rotor, cla, lambda_i, ct = args
 
             alpha_control = alpha_disk + thetac  # Computing the Disk AoA at the Control Plane CP
-            mu = (velocity * cos(alpha_control)) / (main_rotor.omega * main_rotor.radius)
-            lambda_c = velocity * sin(alpha_control) / (main_rotor.omega * main_rotor.radius)
+            mu = (velocity * cos(alpha_control)) / (main_rotor.omega * main_rotor.radius)  # Advance Ratio
+            lambda_c = velocity * sin(alpha_control) / (main_rotor.omega * main_rotor.radius)  # Inflow Ratio at CP
 
             def thrust_constraint(collective_pitch, advance_ratio, inflow_ratio_control, inflow_ratio, lift_gradient,
                                   thrust_coef, solidity):
@@ -214,8 +215,8 @@ class Trim(Constants):
         trim_conditions = [Trim(v) for v in velocities]
 
         # Retrieving Numerical Solution
-        pitch_num = [degrees(case.trim_solver[0]) for case in trim_conditions]
-        cyclic_num = [degrees(case.trim_solver[1]) for case in trim_conditions]
+        pitch_num = [degrees(case.numerical_solution[0]) for case in trim_conditions]
+        cyclic_num = [degrees(case.numerical_solution[1]) for case in trim_conditions]
 
         # Retrieving Linearized Solution
         pitch_lin = [degrees(case.linearized_solution[0]) for case in trim_conditions]

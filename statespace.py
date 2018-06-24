@@ -3,6 +3,8 @@
 
 """ This file contains the class definition used to calculate the trim conditions of the CH53 Helicopter """
 
+# http://python-control.readthedocs.io/en/latest/intro.html most likely this will be required
+
 __author__ = ["San Kilkis"]
 
 from globs import Constants
@@ -11,6 +13,7 @@ from cla_regression import LiftGradient
 from ch53_inertia import CH53Inertia
 
 import numpy as np
+import copy
 from scipy.optimize import fsolve
 import matplotlib.pyplot as plt
 from math import radians, sqrt, pi, degrees, cos, sin, asin, atan
@@ -66,47 +69,11 @@ class StateSpace(Constants):
         self.longitudinal_cyclic = float(longitudinal_cyclic)
 
     @Attribute
-    def weights(self):
-        """ Instantiates the Weight Estimating Relationships class to be accessed by the rest of the class
-
-        :return: Class containing all Component Weights
-        """
-        return ComponentWeights()
-
-    @Attribute
-    def inertia_blade(self):
-        """ Single blade Mass Moment of Inertia about the flapping hinge assuming that the blade length runs from
-        hub-center to tip.
-
-        :return: Mass Moment of Inertia in SI kilogram meter squared [kg m^2]
-        """
-        return (1.0/3.0) * \
-               (self.weights.kg_to_lbs(self.weights.W_2A, power=-1) /
-                self.main_rotor.blade_number) * self.main_rotor.radius**2
-
-    @Attribute
     def velocity(self):
         """ The magnitude of the velocity vector, V,  in trim-condition.
 
         :return: Velocity in SI meter per second [m/s] """
         return sqrt(self.u**2 + self.w**2)
-
-    @Attribute
-    def lift_gradient(self):
-        """ Lift coefficient gradient of the CH-53D main rotor (SC1095 Airfoil)
-
-        :return: Lift Coefficient Gradient in SI one over radians [1/rad]
-        """
-        return LiftGradient().gradient
-
-    @Attribute
-    def lock_number(self):
-        """ Represents the ratio of aerodynamic excitation forces to the inertial forces on the blade
-
-        :return: Non-Dimensional Lock Number [-]
-        """
-        return (self.rho * self.lift_gradient * self.main_rotor.chord * (self.main_rotor.radius ** 4)) \
-               / self.inertia_blade
 
     @Attribute
     def alpha_control(self):
@@ -165,14 +132,16 @@ class StateSpace(Constants):
                                         ((v / (omega * r)) * sin(self.alpha_control - a1) + abs(lambda_i))**2)
 
     @Attribute
-    # TODO This doesn't work
     def inflow_ratio(self):
         """ Utilizes a numerical solver to compute the inflow ratio as discussed in the lecture slides """
 
-        def func(lambda_i):
-            return self.thrust_coefficient_elem(lambda_i) - self.thrust_coefficient_glau(lambda_i)
+        def func(lambda_i, *args):
 
-        return float(abs((fsolve(func, x0=np.array([1])))[0]))
+            instance, status = args
+
+            return instance.thrust_coefficient_elem(lambda_i) - instance.thrust_coefficient_glau(lambda_i)
+
+        return float(abs((fsolve(func, x0=np.array([1]), args=(self, 'instance_passed')))[0]))
 
     @Attribute
     def longitudinal_disk_tilt(self):
@@ -220,15 +189,47 @@ class StateSpace(Constants):
     def theta_f_dot(self):
         return self.q
 
+    def plot_test(self):
+
+        time = np.linspace(0, 10, 1000)
+        delta_t = time[1] - time[0]
+        u = [self.u]
+        w = [self.w]
+        q = [self.q]
+        theta_f = [self.theta_f]
+        current_case = self
+        for i in range(1, len(time)):
+            u.append(current_case.u + current_case.u_dot * delta_t)
+            w.append(current_case.w + current_case.w_dot * delta_t)
+            q.append(current_case.q + current_case.q_dot * delta_t)
+            theta_f.append(current_case.theta_f + current_case.theta_f_dot * delta_t)
+
+            # Control Inputs
+            if 0.5 < time[i] < 1.0:
+                cyclic_input = radians(1.0)
+            else:
+                cyclic_input = 0.0
+            current_case = StateSpace(u=u[i], w=w[i], q=q[i], theta_f=theta_f[i], longitudinal_cyclic=cyclic_input)
+
+        # Plotting Numerical Solution
+        fig = plt.figure('TrimvsVelocity')
+        plt.style.use('ggplot')
+
+        plt.plot(time, u, label='Horizontal Speed')
+        plt.plot(time, w, label='Vertical Speed')
+
+        # Creating Labels & Saving Figure
+        plt.title(r'Control Deflection as a Function of Forward Velocity')
+        plt.xlabel(r'True Airspeed, $V_\mathrm{TAS}$ [m/s]')
+        plt.ylabel(r'Required Control Deflection [deg]')
+        plt.legend(loc='best')
+        plt.show()
+        # fig.savefig(fname=os.path.join(_working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
+
+        return 'Integration Performed'
+
 
 if __name__ == '__main__':
-    obj = StateSpace(0, 0)
-    print obj.rotor_distance_to_cg
-    # print obj.inflow_ratio
-    # print obj.longitudinal_disk_tilt
-    # print obj.thrust_coefficient_elem(obj.inflow_ratio)
-    # print obj.thrust
-    # print obj.drag
-    # print obj.u_dot
-    # print obj.w_dot
-    # print obj.q_dot
+    obj = StateSpace(u=0.0, w=1.0, q=0, theta_f=radians(0.0), collective_pitch=radians(0.0), longitudinal_cyclic=radians(0.0))
+    print obj.inflow_ratio
+    print obj.plot_test()
