@@ -222,3 +222,5 @@ class CH53Inertia(Assembly):
 
 if __name__ == '__main__':
     obj = CH53Inertia()
+    print obj.get_cg()
+    print obj.get_inertia()

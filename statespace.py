@@ -8,6 +8,7 @@ __author__ = ["San Kilkis"]
 from globs import Constants
 from masses import ComponentWeights
 from cla_regression import LiftGradient
+from ch53_inertia import CH53Inertia
 
 import numpy as np
 from scipy.optimize import fsolve
@@ -200,9 +201,20 @@ class StateSpace(Constants):
                self.q * self.u
 
     @Attribute
+    def rotor_distance_to_cg(self):
+        """ Computes the z-axis distance of the main-rotor centroid to the center of gravity (C.G) of the CH-53
+
+        :return: Distance of the Main Rotor to the Center of Gravity (C.G.) on the z-axis in SI meter [m]
+        :rtype: float
+        """
+        inertia_instance = CH53Inertia()
+        cg = inertia_instance.get_cg()
+        return abs(cg.z - inertia_instance.main_rotor.position.z)
+
+    @Attribute
     def q_dot(self):
-        # TODO Change the 1.0 to the correct height of the disk plane from the c.g.
-        return (-self.thrust / self.inertia_blade) * 1.0 * sin(self.longitudinal_cyclic - self.longitudinal_disk_tilt)
+        return (-self.thrust / self.inertia_blade) * self.rotor_distance_to_cg * \
+               sin(self.longitudinal_cyclic - self.longitudinal_disk_tilt)
 
     @Attribute
     def theta_f_dot(self):
@@ -211,11 +223,12 @@ class StateSpace(Constants):
 
 if __name__ == '__main__':
     obj = StateSpace(0, 0)
-    print obj.inflow_ratio
-    print obj.longitudinal_disk_tilt
-    print obj.thrust_coefficient_elem(obj.inflow_ratio)
-    print obj.thrust
-    print obj.drag
-    print obj.u_dot
-    print obj.w_dot
-    print obj.q_dot
+    print obj.rotor_distance_to_cg
+    # print obj.inflow_ratio
+    # print obj.longitudinal_disk_tilt
+    # print obj.thrust_coefficient_elem(obj.inflow_ratio)
+    # print obj.thrust
+    # print obj.drag
+    # print obj.u_dot
+    # print obj.w_dot
+    # print obj.q_dot
