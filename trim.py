@@ -11,10 +11,39 @@ import numpy as np
 from numpy.linalg import inv
 from scipy.optimize import fsolve
 import matplotlib.pyplot as plt
-from math import sqrt, pi, degrees, cos, sin, atan
+from math import sqrt, pi, degrees, radians, cos, sin, atan
 import os  # Necessary to determining the current working directory to save figures
 
 _working_dir = os.getcwd()
+
+
+class Input(object):
+
+    def __init__(self, collective_pitch, longitudinal_cyclic, unit='rad'):
+        self.collective_pitch = collective_pitch
+        self.longitudinal_cyclic = longitudinal_cyclic
+        self.unit = unit
+
+    def __repr__(self):
+        return 'C. Pitch = %1.2f, Long. Cyclic = %1.2f [%s]' % (self.collective_pitch,
+                                                                self.longitudinal_cyclic,
+                                                                self.unit)
+
+    def deg(self):
+        """ Conversion to SI degree [deg] """
+        if self.unit is 'rad':
+            setattr(self, 'collective_pitch', degrees(self.collective_pitch))
+            setattr(self, 'longitudinal_cyclic', degrees(self.longitudinal_cyclic))
+            setattr(self, 'unit', 'deg')
+        return self.__repr__()
+
+    def rad(self):
+        """ Conversion to SI radian [rad] """
+        if self.unit is 'deg':
+            setattr(self, 'collective_pitch', radians(self.collective_pitch))
+            setattr(self, 'longitudinal_cyclic', radians(self.longitudinal_cyclic))
+            setattr(self, 'unit', 'deg')
+        return self.__repr__()
 
 
 class Trim(Constants):
@@ -210,9 +239,32 @@ class Trim(Constants):
         fig.savefig(fname=os.path.join(_working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
         return '%s Plotted and Saved' % fig.get_label()
 
+    @Attribute
+    def velocity_range(self):
+        return np.linspace(0, self.cruise_velocity + 10, 1000)
+
+    @Attribute
+    def trim_conditions(self):
+        return [Trim(v) for v in self.velocity_range]
+
+    def get_trim(self, velocity=0):
+        """ Retrieves the control inputs required to trim the CH-53 at the provided :parameter:`velocity`
+
+        :param velocity: Desired velocity for trim-calculation
+        :type velocity: float
+
+        :return: Input Class containing Collective Pitch and Longitudinal Cyclic required for Trim in SI rad
+        :rtype: Input
+        """
+        if self.velocity is not velocity:
+            trim_case = Trim(velocity)
+        else:
+            trim_case = self
+        return Input(trim_case.numerical_solution[0], trim_case.numerical_solution[1]).deg()
+
     def plot_trim(self):
-        velocities = np.linspace(0, self.cruise_velocity + 10, 100)
-        trim_conditions = [Trim(v) for v in velocities]
+        velocities = self.velocity_range
+        trim_conditions = self.trim_conditions
 
         # Retrieving Numerical Solution
         pitch_num = [degrees(case.numerical_solution[0]) for case in trim_conditions]
@@ -246,3 +298,4 @@ if __name__ == '__main__':
     obj = Trim()
     obj.plot_trim()
     obj.plot_error()
+    #

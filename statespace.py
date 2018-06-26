@@ -11,6 +11,7 @@ from globs import Constants, Attribute
 from masses import ComponentWeights
 from cla_regression import LiftGradient
 from ch53_inertia import CH53Inertia
+from hover import HoverFlapping
 
 import numpy as np
 import copy
@@ -56,15 +57,33 @@ class StateSpace(Constants):
     def velocity(self):
         """ The magnitude of the velocity vector, V,  in trim-condition.
 
-        :return: Velocity in SI meter per second [m/s] """
+        :return: Velocity in SI meter per second [m/s]
+        :rtype: float
+        """
         return sqrt(self.u**2 + self.w**2)
 
     @Attribute
     def alpha_control(self):
-        """ Computes the Angle of Attack (AoA) of the control plane in SI radian [rad] """
-        gamma = atan(self.w / self.u) if self.u != 0.0 else 0
-        alpha = self.longitudinal_cyclic - gamma
-        return alpha if self.u > 0 else alpha + pi
+        """ Computes the Angle of Attack (AoA) of the control plane in SI radian [rad] depending on flight conditions.
+        If the helicopter is in horizontal translation motion then the FPA (Flight Path Angle), gamma, is computed
+        based on the angle formed by the horizontal and vertical velocities. Also, if the horizontal velocity is
+        negative then 180 degrees (pi) is added to this angle to keep it consistent and in the correct quadrant. On the
+        other hand, if the helicopter is in pure vertical motion, then the FPA is perpendicular to the horizon and
+        a value of pi/2 or -pi/2 is returned depending on the direction of flight.
+
+        :return: Control Plane Angle of Attack (AoA) in SI radian [rad]
+        :rtype: float
+        """
+        if self.u != 0:
+            gamma = atan(self.w / self.u)
+            gamma = gamma if self.u > 0 else gamma + pi  # Adding 180 degrees if moving backwards
+        else:  # Vertical Translation Case (Forcing Flight-Path Angle Vertical)
+            gamma = pi / 2. if self.w > 0 else - pi / 2.
+
+        # Subtracting the Flight Path Angle, gamma, to obtain the CP AoA
+        alpha_c = self.longitudinal_cyclic - gamma
+
+        return alpha_c
 
     @Attribute
     def advance_ratio(self):
@@ -86,7 +105,7 @@ class StateSpace(Constants):
         theta0 = self.collective_pitch
         lambda_c = self.inflow_ratio_control
         omega = self.main_rotor.omega
-        return (((8.0/3.0) * mu * theta0) - (2 * mu * (lambda_c + abs(lambda_i))) -
+        return (((8.0/3.0) * mu * theta0) - (2 * mu * (lambda_c + lambda_i)) -
                 ((16.0/self.lock_number) * (self.q / omega))) / (1 - 0.5 * mu**2)
 
     def thrust_coefficient_elem(self, lambda_i):
@@ -100,7 +119,7 @@ class StateSpace(Constants):
         sigma = self.main_rotor.solidity
         lambda_c = self.inflow_ratio_control
         theta0 = self.collective_pitch
-        return (0.25 * cla * sigma) * ((2.0/3.0) * theta0 * (1 + (1.5 * mu**2)) - (lambda_c + abs(lambda_i)))
+        return (0.25 * cla * sigma) * ((2./3.) * theta0 * (1 + (1.5 * mu**2)) - (lambda_c + lambda_i))
 
     def thrust_coefficient_glau(self, lambda_i):
         """ Thrust coefficient as defined by the Glauert Theory
@@ -112,20 +131,38 @@ class StateSpace(Constants):
         v = self.velocity
         omega = self.main_rotor.omega
         r = self.main_rotor.radius
-        return 2 * abs(lambda_i) * sqrt(((v / (omega * r)) * cos(self.alpha_control - a1))**2 +
-                                        ((v / (omega * r)) * sin(self.alpha_control - a1) + abs(lambda_i))**2)
+        return 2 * lambda_i * sqrt(((v / (omega * r)) * cos(self.alpha_control - a1))**2 +
+                                   ((v / (omega * r)) * sin(self.alpha_control - a1) + lambda_i)**2)
+
+    @Attribute
+    def hover_induced_velocity(self):
+        """ Taken from the script `inducedvelocity.py` written for the previous assignment
+
+        :return: Hover Induced Velocity in SI meter per second [m/s]
+        """
+        return sqrt(self.weight_mtow/(2*self.rho*pi*(self.main_rotor.radius ** 2)))
 
     @Attribute
     def inflow_ratio(self):
-        """ Utilizes a numerical solver to compute the inflow ratio as discussed in the lecture slides """
+        """ Utilizes a numerical solver to compute the inflow ratio as discussed in the lecture slides unless a pure
+        hover is input as the current trim-condition. In the pure-hover case, the inflow ratio during hover is returned
+
+        :return: Inflow Ratio
+        :rtype: float
+        """
 
         def func(lambda_i, *args):
 
             instance, status = args
+            diff = instance.thrust_coefficient_elem(lambda_i) - instance.thrust_coefficient_glau(lambda_i)
+            return diff
 
-            return instance.thrust_coefficient_elem(lambda_i) - instance.thrust_coefficient_glau(lambda_i)
+        if self.velocity == 0:
+            ratio = self.hover_induced_velocity / (self.main_rotor.omega * self.main_rotor.radius)
+        else:
+            ratio = float((fsolve(func, x0=np.array([1]), args=(self, 'instance_passed'))[0]))
 
-        return float(abs((fsolve(func, x0=np.array([1]), args=(self, 'instance_passed')))[0]))
+        return ratio
 
     @Attribute
     def longitudinal_disk_tilt(self):
@@ -144,29 +181,56 @@ class StateSpace(Constants):
         :return: Distance of the Main Rotor to the Center of Gravity (C.G.) on the z-axis in SI meter [m]
         :rtype: float
         """
-        inertia_instance = CH53Inertia()
-        cg = inertia_instance.get_cg()
-        return abs(cg.z - inertia_instance.main_rotor.position.z)
+
+        cg = self.ch53_inertia.get_cg()
+        motor_position = self.ch53_inertia.main_rotor.position
+        return abs(cg.z - motor_position.z)
 
     @Attribute
     def drag(self):
+        """ Computes the drag force acting on the CH-53 at the current trim-state utilizing the Equivalent Flat Plate
+        Area as discussed in Assignment I
+
+        :return: Drag Force in SI Newton [N]
+        :rtype: float
+        """
         return self.flat_plate_area*0.5*self.rho*(self.velocity**2)
 
-    @Attribute
+    @property
     def u_dot(self):
+        """ Computes the acceleration on the x-axis of the CH-53 (body-axis) utilizing force equilibrium
+
+        :return: Acceleration on the x-axis in SI meter per second squared [m/s^2]
+        :rtype: float
+        """
         return -self.g * sin(self.theta_f) - ((self.drag * self.u)/(self.mass_mtow * self.velocity)) + \
                (self.thrust / self.mass_mtow) * sin(self.longitudinal_cyclic - self.longitudinal_disk_tilt) -\
                self.q * self.w
 
-    @Attribute
+    @property
     def w_dot(self):
+        """ Computes the acceleration on the z-axis of the CH-53 (body-axis) utilizing force equilibrium
+
+        :return: Acceleration on the z-axis in SI meter per second squared [m/s^2]
+        :rtype: float
+        """
         return self.g * cos(self.theta_f) - ((self.drag * self.w)/(self.mass_mtow * self.velocity)) - \
                (self.thrust / self.mass_mtow) * cos(self.longitudinal_cyclic - self.longitudinal_disk_tilt) +\
                self.q * self.u
 
     @Attribute
+    def ch53_inertia(self):
+        return CH53Inertia()
+
+    @Attribute
     def inertia(self):
-        return CH53Inertia().get_inertia()
+        """ Computes the Mass Moment of Inertia of the CH-53 utilizing the method discussed in Assignment I and the
+        :class:`CH53Inertia`.
+
+        :return: Total Mass Moment of Inertia w.r.t the center of gravity in SI kilogram meter squared [kg m^2]
+        :rtype: Inertia
+        """
+        return self.ch53_inertia.get_inertia()
 
     @Attribute
     def q_dot(self):
@@ -179,7 +243,7 @@ class StateSpace(Constants):
 
     def plot_test(self):
 
-        time = np.linspace(0, 10, 1000)
+        time = np.linspace(0, 2, 1000)
         delta_t = time[1] - time[0]
         u = [self.u]
         w = [self.w]
@@ -194,12 +258,12 @@ class StateSpace(Constants):
 
             # Control Inputs
             if 0.5 < time[i] < 1.0:
-                cyclic_input = radians(5.0)
+                cyclic_input = radians(0.0)
             else:
                 cyclic_input = 0.0
-            current_case = StateSpace(u=u[i], w=w[i], q=q[i], theta_f=theta_f[i], longitudinal_cyclic=cyclic_input)
-            print current_case.thrust
-            print current_case.inflow_ratio
+            current_case = StateSpace(u=u[i], w=w[i], q=q[i], theta_f=theta_f[i], longitudinal_cyclic=cyclic_input,
+                                      collective_pitch=self.collective_pitch)
+            print current_case.w_dot
         # Plotting Numerical Solution
         fig = plt.figure('TrimvsVelocity')
         plt.style.use('ggplot')
@@ -209,8 +273,8 @@ class StateSpace(Constants):
 
         # Creating Labels & Saving Figure
         plt.title(r'Response of Speeds vs Time.')
-        plt.xlabel(r'Velocity [m/s]')
-        plt.ylabel(r'Time [s]')
+        plt.xlabel(r'Time [s]')
+        plt.ylabel(r'Velocity [m/s]')
         plt.legend(loc='best')
         plt.show()
         # fig.savefig(fname=os.path.join(_working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
@@ -219,6 +283,8 @@ class StateSpace(Constants):
 
 
 if __name__ == '__main__':
-    obj = StateSpace(u=20.0, w=0.0, q=0, theta_f=radians(0.0), collective_pitch=radians(0.0), longitudinal_cyclic=radians(0.0))
-    print obj.inflow_ratio
+    obj = StateSpace(u=0.0001, w=0.0, q=0, theta_f=radians(0.0), collective_pitch=radians(9.18689),
+                     longitudinal_cyclic=radians(0.0))
+    print obj.w_dot
     print obj.plot_test()
+    print obj.inertia
