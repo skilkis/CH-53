@@ -95,6 +95,14 @@ class Trim(Constants):
         return atan(self.drag/self.weight_mtow)
 
     @Attribute
+    def fuselage_tilt(self):
+        """ Returns the fuselage tilt angle (Negative = Nose Down)
+
+        :return: Fuselage Tilt Angle in SI radian [rad]
+        """
+        return -self.alpha_disk
+
+    @Attribute
     def hover_induced_velocity(self):
         """ Utilizes the ACT Definition from Assignment I to calculate the hover induced velocity
 
@@ -205,6 +213,14 @@ class Trim(Constants):
         return sol[0], sol[1]
 
     @Attribute
+    def collective_pitch(self):
+        return self.numerical_solution[0]
+
+    @Attribute
+    def longitudinal_cyclic(self):
+        return self.numerical_solution[1]
+
+    @Attribute
     def linearized_solution(self):
 
         # Linearizing the Advance-Ratio by neglecting the effect of the Longitudinal Cyclic (Small Angles)
@@ -222,10 +238,10 @@ class Trim(Constants):
         # Obtaining solution by pre-multiplying the inverse of the A-matrix with the b-matrix
         sol = np.matmul(inv(a_matrix), b)
 
-        return sol[1], sol[0]
+        return sol[1], sol[0]  # Swapping order to keep Input syntax (Collective, Cyclic)
 
     @staticmethod
-    def plot_error():
+    def plot_inflow_error():
         velocities = np.linspace(0.1, 100, 50)
         trim_conditions = [Trim(v) for v in velocities]
         errors = [((case.inflow_ratio_glau - case.inflow_ratio) / case.inflow_ratio) * 100. for case in trim_conditions]
@@ -247,6 +263,7 @@ class Trim(Constants):
     def trim_conditions(self):
         return [Trim(v) for v in self.velocity_range]
 
+    # TODO check if this method is truely necessary, only wrapping the numerical result which is redundant
     def get_trim(self, velocity=0):
         """ Retrieves the control inputs required to trim the CH-53 at the provided :parameter:`velocity`
 
@@ -263,6 +280,7 @@ class Trim(Constants):
         return Input(trim_case.numerical_solution[0], trim_case.numerical_solution[1]).deg()
 
     def plot_trim(self):
+        """ Shows differences between the Numerical/Linearized Solutions for all velocities in the flight envelope """
         velocities = self.velocity_range
         trim_conditions = self.trim_conditions
 
@@ -297,5 +315,4 @@ class Trim(Constants):
 if __name__ == '__main__':
     obj = Trim()
     obj.plot_trim()
-    obj.plot_error()
-    #
+    obj.plot_inflow_error()

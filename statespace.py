@@ -8,15 +8,15 @@
 __author__ = ["San Kilkis"]
 
 from globs import Constants, Attribute
-from masses import ComponentWeights
-from cla_regression import LiftGradient
 from ch53_inertia import CH53Inertia
-from hover import HoverFlapping
+from trim import Trim
+from timeit import default_timer as timer
 
 import numpy as np
-import copy
 from scipy.optimize import fsolve
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
+from matplotlib.ticker import FormatStrFormatter
 from math import radians, sqrt, pi, degrees, cos, sin, asin, atan
 import os  # Necessary to determining the current working directory to save figures
 
@@ -175,6 +175,24 @@ class StateSpace(Constants):
         return self.thrust_coefficient_elem(self.inflow_ratio) * self.rho * (omega * r)**2 * pi * r**2
 
     @Attribute
+    def ch53_inertia(self):
+        """ Instantiating the :class:`CH53Inertia` in a lazy-attribute to provide geometry parameters as required
+
+        :rtype: CH53Inertia
+        """
+        return CH53Inertia()
+
+    @Attribute
+    def inertia(self):
+        """ Computes the Mass Moment of Inertia of the CH-53 utilizing the method discussed in Assignment I and the
+        :class:`CH53Inertia`.
+
+        :return: Total Mass Moment of Inertia w.r.t the center of gravity in SI kilogram meter squared [kg m^2]
+        :rtype: Inertia
+        """
+        return self.ch53_inertia.get_inertia()
+
+    @Attribute
     def rotor_distance_to_cg(self):
         """ Computes the z-axis distance of the main-rotor centroid to the center of gravity (C.G) of the CH-53
 
@@ -203,34 +221,21 @@ class StateSpace(Constants):
         :return: Acceleration on the x-axis in SI meter per second squared [m/s^2]
         :rtype: float
         """
-        return -self.g * sin(self.theta_f) - ((self.drag * self.u)/(self.mass_mtow * self.velocity)) + \
-               (self.thrust / self.mass_mtow) * sin(self.longitudinal_cyclic - self.longitudinal_disk_tilt) -\
-               self.q * self.w
+        drag = ((self.drag * self.u)/(self.mass_mtow * self.velocity)) if self.velocity != 0 else 0
+        return -self.g * sin(self.theta_f) - drag + (self.thrust / self.mass_mtow) * \
+               sin(self.longitudinal_cyclic - self.longitudinal_disk_tilt) - self.q * self.w
 
     @property
     def w_dot(self):
-        """ Computes the acceleration on the z-axis of the CH-53 (body-axis) utilizing force equilibrium
+        """ Computes the acceleration on the z-axis of the CH-53 (body-axis) utilizing force equilibrium, NOTE: The
+        z-axis is defined as positive in the nadir direction, thus a positive value translates to a sink-rate.
 
         :return: Acceleration on the z-axis in SI meter per second squared [m/s^2]
         :rtype: float
         """
-        return self.g * cos(self.theta_f) - ((self.drag * self.w)/(self.mass_mtow * self.velocity)) - \
-               (self.thrust / self.mass_mtow) * cos(self.longitudinal_cyclic - self.longitudinal_disk_tilt) +\
-               self.q * self.u
-
-    @Attribute
-    def ch53_inertia(self):
-        return CH53Inertia()
-
-    @Attribute
-    def inertia(self):
-        """ Computes the Mass Moment of Inertia of the CH-53 utilizing the method discussed in Assignment I and the
-        :class:`CH53Inertia`.
-
-        :return: Total Mass Moment of Inertia w.r.t the center of gravity in SI kilogram meter squared [kg m^2]
-        :rtype: Inertia
-        """
-        return self.ch53_inertia.get_inertia()
+        drag = ((self.drag * self.w)/(self.mass_mtow * self.velocity)) if self.velocity != 0 else 0
+        return self.g * cos(self.theta_f) - drag - (self.thrust / self.mass_mtow) * \
+               cos(self.longitudinal_cyclic - self.longitudinal_disk_tilt) + self.q * self.u
 
     @Attribute
     def q_dot(self):
@@ -241,15 +246,19 @@ class StateSpace(Constants):
     def theta_f_dot(self):
         return self.q
 
-    def plot_test(self):
+    def plot_response(self):
 
         time = np.linspace(0, 2, 1000)
         delta_t = time[1] - time[0]
+        cyclic_input = [0]
         u = [self.u]
         w = [self.w]
         q = [self.q]
         theta_f = [self.theta_f]
         current_case = self
+
+        # Forward Euler Integration
+        start = timer()
         for i in range(1, len(time)):
             u.append(current_case.u + current_case.u_dot * delta_t)
             w.append(current_case.w + current_case.w_dot * delta_t)
@@ -258,33 +267,81 @@ class StateSpace(Constants):
 
             # Control Inputs
             if 0.5 < time[i] < 1.0:
-                cyclic_input = radians(0.0)
+                cyclic_input.append(radians(5.0))
             else:
-                cyclic_input = 0.0
-            current_case = StateSpace(u=u[i], w=w[i], q=q[i], theta_f=theta_f[i], longitudinal_cyclic=cyclic_input,
+                cyclic_input.append(0)
+            current_case = StateSpace(u=u[i], w=w[i], q=q[i], theta_f=theta_f[i], longitudinal_cyclic=cyclic_input[i],
                                       collective_pitch=self.collective_pitch)
-            print current_case.w_dot
-        # Plotting Numerical Solution
-        fig = plt.figure('TrimvsVelocity')
-        plt.style.use('ggplot')
 
-        plt.plot(time, u, label='Horizontal Speed')
-        plt.plot(time, w, label='Vertical Speed')
+        end = timer()
+        print '\nIntegration Performed \n' + 'Duration: %1.5f [s]\n' % (end - start)
+
+        # Plotting Response
+        fig = plt.figure('EulerResponseVelocities')
+        plt.style.use('ggplot')
+        gs = gridspec.GridSpec(2, 1, top=0.9)
+        fig.set_tight_layout('False')
+
+        cyc_plot = fig.add_subplot(gs[0, 0])
+        cyc_plot.plot(time, [degrees(rad) for rad in cyclic_input])
+        cyc_plot.set_ylabel(r'Lon. Cyclic [deg]')
+        cyc_plot.set_xlabel('')
+        cyc_plot.yaxis.set_major_formatter(FormatStrFormatter('%.3f'))
+
+        vel_plot = fig.add_subplot(gs[1, 0])
+        vel_plot.plot(time, u, label='Horizontal')
+        vel_plot.plot(time, w, label='Vertical')
+        vel_plot.set_ylabel(r'Velocity [m/s]')
+        vel_plot.set_xlabel('')
+        vel_plot.yaxis.set_major_formatter(FormatStrFormatter('%.3f'))
+        vel_plot.legend(loc='best')
 
         # Creating Labels & Saving Figure
-        plt.title(r'Response of Speeds vs Time.')
+        plt.suptitle(r'Translational Response as a Function of Time')
         plt.xlabel(r'Time [s]')
-        plt.ylabel(r'Velocity [m/s]')
-        plt.legend(loc='best')
         plt.show()
-        # fig.savefig(fname=os.path.join(_working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
+        fig.savefig(fname=os.path.join(_working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
 
-        return 'Integration Performed'
+        # ----------------------------------------------------------------------------------------------------------- #
+
+        # Creating Second Figure
+        fig = plt.figure('EulerResponseAngles')
+        plt.style.use('ggplot')
+        fig.set_tight_layout('False')
+        gs = gridspec.GridSpec(3, 1, top=0.925, left=0.15)
+
+        cyc_plot = fig.add_subplot(gs[0, 0])
+        cyc_plot.plot(time, [degrees(rad) for rad in cyclic_input])
+        cyc_plot.set_ylabel(r'$\theta_{ls}$ [deg]')
+        cyc_plot.yaxis.set_major_formatter(FormatStrFormatter('%.3f'))
+
+        q_plot = fig.add_subplot(gs[1, 0])
+        q_plot.plot(time, [degrees(rad) for rad in q])
+        q_plot.set_ylabel(r'$q$ [deg/s]')
+        q_plot.set_xlabel('')
+        q_plot.yaxis.set_major_formatter(FormatStrFormatter('%.3f'))
+
+        theta_plot = fig.add_subplot(gs[2, 0])
+        theta_plot.plot(time, [degrees(rad) for rad in theta_f])
+        theta_plot.set_ylabel(r'$\theta_f$ [deg]')
+        theta_plot.set_xlabel('')
+        theta_plot.yaxis.set_major_formatter(FormatStrFormatter('%.3f'))
+
+        # Creating Labels & Saving Figure
+        plt.suptitle(r'Angular Response as a Function of Time')
+        plt.xlabel(r'Time [s]')
+        plt.show()
+        fig.savefig(fname=os.path.join(_working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
+
+        return 'Figures Plotted and Saved'
 
 
 if __name__ == '__main__':
-    obj = StateSpace(u=0.0001, w=0.0, q=0, theta_f=radians(0.0), collective_pitch=radians(9.18689),
-                     longitudinal_cyclic=radians(0.0))
-    print obj.w_dot
-    print obj.plot_test()
-    print obj.inertia
+    trim_case = Trim(50)  # Hover Trim case at V=0
+    u = trim_case.velocity*cos(trim_case.fuselage_tilt)
+    print u
+    w = trim_case.velocity*sin(trim_case.fuselage_tilt)
+    print w
+    obj = StateSpace(u=u, w=w, q=0, theta_f=trim_case.fuselage_tilt,
+                     collective_pitch=trim_case.collective_pitch, longitudinal_cyclic=trim_case.longitudinal_cyclic)
+    obj.plot_response()

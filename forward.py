@@ -349,6 +349,7 @@ class ForwardFlapping(Constants):
 
 if __name__ == '__main__':
     obj = ForwardFlapping(velocity=20)
+    obj.plot_response()
 
     # print 'Con. Angle = ' + str(degrees(obj.coning_angle))
     # print 'Long. Tilt = ' + str(degrees(obj.longitudinal_tilt))
