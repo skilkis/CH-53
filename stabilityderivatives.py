@@ -243,6 +243,10 @@ class StabilityDerivatives(Constants):
                sin(self.longitudinal_cyclic - self.longitudinal_disk_tilt)
 
     @Attribute
+    def theta_f_dot(self):
+        return self.q
+
+    @Attribute
     def u_derivatives(self):
         u_dot = []
         w_dot = []
@@ -349,10 +353,6 @@ class StabilityDerivatives(Constants):
             theta_f_dot.append(case.theta_f_dot / i)
 
         return np.mean(u_dot), np.mean(w_dot), np.mean(q_dot), np.mean(theta_f_dot)
-
-    @Attribute
-    def theta_f_dot(self):
-        return self.q
 
     @staticmethod
     def plot_euler_error():
