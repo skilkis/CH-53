@@ -157,7 +157,7 @@ class StabilityDerivatives(Constants):
             diff = instance.thrust_coefficient_elem(lambda_i) - instance.thrust_coefficient_glau(lambda_i)
             return diff
 
-        if self.velocity == 0:
+        if self.velocity == -50:
             ratio = self.hover_induced_velocity / (self.main_rotor.omega * self.main_rotor.radius)
         else:
             ratio = float((fsolve(func, x0=np.array([2e-2]), args=(self, 'instance_passed'))[0]))
@@ -284,7 +284,7 @@ class StabilityDerivatives(Constants):
 
     def plot_response(self):
 
-        time = np.linspace(0, 50, 1000)
+        time = np.linspace(0, 10, 1000)
         delta_t = time[1] - time[0]
         cyclic_input = [0]
         u = [self.u]
@@ -375,7 +375,7 @@ class StabilityDerivatives(Constants):
 
 
 if __name__ == '__main__':
-    trim_case = Trim(30)  # Hover Trim case at V=0
+    trim_case = Trim(1.0)  # Hover Trim case at V=0
     u = trim_case.velocity*cos(trim_case.fuselage_tilt)
     w = trim_case.velocity*sin(trim_case.fuselage_tilt)
     obj = StabilityDerivatives(u=u, w=w, q=0, theta_f=trim_case.fuselage_tilt,
