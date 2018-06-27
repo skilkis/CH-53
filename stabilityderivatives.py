@@ -17,7 +17,7 @@ from scipy.optimize import fsolve
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from matplotlib.ticker import FormatStrFormatter
-from math import radians, sqrt, pi, degrees, cos, sin, asin, atan
+from math import radians, sqrt, pi, degrees, cos, sin, asin, atan, exp
 import os  # Necessary to determining the current working directory to save figures
 
 _working_dir = os.getcwd()
@@ -157,7 +157,7 @@ class StabilityDerivatives(Constants):
             diff = instance.thrust_coefficient_elem(lambda_i) - instance.thrust_coefficient_glau(lambda_i)
             return diff
 
-        if self.velocity == -50:
+        if self.velocity == 0:
             ratio = self.hover_induced_velocity / (self.main_rotor.omega * self.main_rotor.radius)
         else:
             ratio = float((fsolve(func, x0=np.array([2e-2]), args=(self, 'instance_passed'))[0]))
@@ -245,42 +245,78 @@ class StabilityDerivatives(Constants):
     @Attribute
     def u_derivatives(self):
         fin = StabilityDerivatives(u=self.u + 1.0, w=self.w, q=self.q, theta_f=self.theta_f,
-                                   collective_pitch=self.collective_pitch, longitudinal_cyclic=self.longitudinal_cyclic)
+                                   collective_pitch=self.collective_pitch,
+                                   longitudinal_cyclic=self.longitudinal_cyclic)
         return fin.u_dot, fin.w_dot, fin.q_dot, fin.theta_f_dot
 
     @Attribute
     def w_derivatives(self):
         fin = StabilityDerivatives(u=self.u, w=self.w + 1.0, q=self.q, theta_f=self.theta_f,
-                                   collective_pitch=self.collective_pitch, longitudinal_cyclic=self.longitudinal_cyclic)
+                                   collective_pitch=self.collective_pitch,
+                                   longitudinal_cyclic=self.longitudinal_cyclic)
         return fin.u_dot, fin.w_dot, fin.q_dot, fin.theta_f_dot
 
     @Attribute
     def q_derivatives(self):
         fin = StabilityDerivatives(u=self.u, w=self.w, q=self.q + 1.0, theta_f=self.theta_f,
-                                   collective_pitch=self.collective_pitch, longitudinal_cyclic=self.longitudinal_cyclic)
+                                   collective_pitch=self.collective_pitch,
+                                   longitudinal_cyclic=self.longitudinal_cyclic)
         return fin.u_dot, fin.w_dot, fin.q_dot, fin.theta_f_dot
 
     @Attribute
     def theta_f_derivatives(self):
         fin = StabilityDerivatives(u=self.u, w=self.w, q=self.q, theta_f=self.theta_f + 1.0,
-                                   collective_pitch=self.collective_pitch, longitudinal_cyclic=self.longitudinal_cyclic)
+                                   collective_pitch=self.collective_pitch,
+                                   longitudinal_cyclic=self.longitudinal_cyclic)
         return fin.u_dot, fin.w_dot, fin.q_dot, fin.theta_f_dot
 
     @Attribute
     def collective_derivatives(self):
         fin = StabilityDerivatives(u=self.u, w=self.w, q=self.q, theta_f=self.theta_f,
-                                   collective_pitch=self.collective_pitch+1.0, longitudinal_cyclic=self.longitudinal_cyclic)
+                                   collective_pitch=self.collective_pitch+1.0,
+                                   longitudinal_cyclic=self.longitudinal_cyclic)
         return fin.u_dot, fin.w_dot, fin.q_dot, fin.theta_f_dot
 
     @Attribute
     def cyclic_derivatives(self):
         fin = StabilityDerivatives(u=self.u, w=self.w, q=self.q, theta_f=self.theta_f,
-                                   collective_pitch=self.collective_pitch, longitudinal_cyclic=self.longitudinal_cyclic+1.0)
+                                   collective_pitch=self.collective_pitch,
+                                   longitudinal_cyclic=self.longitudinal_cyclic+1.0)
         return fin.u_dot, fin.w_dot, fin.q_dot, fin.theta_f_dot
 
     @Attribute
     def theta_f_dot(self):
         return self.q
+
+    @staticmethod
+    def plot_euler_error():
+
+        fig = plt.figure('EulerError')
+        plt.style.use('ggplot')
+
+        # Values used for the Exact Solution
+        x_final = 4
+        x_exact = np.linspace(0, x_final, 100)
+        y_exact = [exp(num) for num in x_exact]
+
+        plt.plot(x_exact, y_exact, label='Exact Solution')
+
+        # Values used for the Numerical Forward Euler Integration
+        num_points = [5, 9, 19]
+        for i in range(0, 3):
+            x = np.linspace(0, x_final, num_points[i])
+            delta_x = x[1] - x[0]
+            y_euler = [exp(0)]
+            y_euler = y_euler + [exp(x[i - 1]) * delta_x + exp(x[i - 1]) for i in range(1, len(x))]
+
+            plt.plot(x, y_euler, linestyle=':', label='F. Euler h = %1.4f' % delta_x, marker='x')
+
+        plt.xlabel(r'$x$ [-]')
+        plt.ylabel(r'$f\left(x\right) = \mathrm{e}^x$ [-]')
+        plt.title(r'Forward Euler Numerical Integration of $f\left(x\right) = e^{x}$')
+        plt.legend(loc='best')
+        plt.show()
+        fig.savefig(fname=os.path.join(_working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
 
     def plot_response(self):
 
@@ -307,7 +343,8 @@ class StabilityDerivatives(Constants):
             else:
                 cyclic_input.append(self.longitudinal_cyclic)
 
-            current_case = StabilityDerivatives(u=u[i], w=w[i], q=q[i], theta_f=theta_f[i], longitudinal_cyclic=cyclic_input[i],
+            current_case = StabilityDerivatives(u=u[i], w=w[i], q=q[i], theta_f=theta_f[i],
+                                                longitudinal_cyclic=cyclic_input[i],
                                                 collective_pitch=self.collective_pitch)
 
         end = timer()
@@ -375,7 +412,7 @@ class StabilityDerivatives(Constants):
 
 
 if __name__ == '__main__':
-    trim_case = Trim(1.0)  # Hover Trim case at V=0
+    trim_case = Trim(30)  # Hover Trim case at V=0
     u = trim_case.velocity*cos(trim_case.fuselage_tilt)
     w = trim_case.velocity*sin(trim_case.fuselage_tilt)
     obj = StabilityDerivatives(u=u, w=w, q=0, theta_f=trim_case.fuselage_tilt,
