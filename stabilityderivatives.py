@@ -23,7 +23,7 @@ import os  # Necessary to determining the current working directory to save figu
 _working_dir = os.getcwd()
 
 
-class StateSpace(Constants):
+class StabilityDerivatives(Constants):
     """ Computes the trim condition of the CH-53 based on current velocities
 
     :param u: Horizontal Flight Velocity in SI meter per second [m/s]
@@ -243,9 +243,39 @@ class StateSpace(Constants):
                sin(self.longitudinal_cyclic - self.longitudinal_disk_tilt)
 
     @Attribute
-    def x_u(self):
-        fin = StateSpace(u=self.u + 1.0, w=self.w, q=self.q, theta_f=self.theta_f,
-                         collective_pitch=self.collective_pitch, longitudinal_cyclic=self.longitudinal_cyclic)
+    def u_derivatives(self):
+        fin = StabilityDerivatives(u=self.u + 1.0, w=self.w, q=self.q, theta_f=self.theta_f,
+                                   collective_pitch=self.collective_pitch, longitudinal_cyclic=self.longitudinal_cyclic)
+        return fin.u_dot, fin.w_dot, fin.q_dot, fin.theta_f_dot
+
+    @Attribute
+    def w_derivatives(self):
+        fin = StabilityDerivatives(u=self.u, w=self.w + 1.0, q=self.q, theta_f=self.theta_f,
+                                   collective_pitch=self.collective_pitch, longitudinal_cyclic=self.longitudinal_cyclic)
+        return fin.u_dot, fin.w_dot, fin.q_dot, fin.theta_f_dot
+
+    @Attribute
+    def q_derivatives(self):
+        fin = StabilityDerivatives(u=self.u, w=self.w, q=self.q + 1.0, theta_f=self.theta_f,
+                                   collective_pitch=self.collective_pitch, longitudinal_cyclic=self.longitudinal_cyclic)
+        return fin.u_dot, fin.w_dot, fin.q_dot, fin.theta_f_dot
+
+    @Attribute
+    def theta_f_derivatives(self):
+        fin = StabilityDerivatives(u=self.u, w=self.w, q=self.q, theta_f=self.theta_f + 1.0,
+                                   collective_pitch=self.collective_pitch, longitudinal_cyclic=self.longitudinal_cyclic)
+        return fin.u_dot, fin.w_dot, fin.q_dot, fin.theta_f_dot
+
+    @Attribute
+    def collective_derivatives(self):
+        fin = StabilityDerivatives(u=self.u, w=self.w, q=self.q, theta_f=self.theta_f,
+                                   collective_pitch=self.collective_pitch+1.0, longitudinal_cyclic=self.longitudinal_cyclic)
+        return fin.u_dot, fin.w_dot, fin.q_dot, fin.theta_f_dot
+
+    @Attribute
+    def cyclic_derivatives(self):
+        fin = StabilityDerivatives(u=self.u, w=self.w, q=self.q, theta_f=self.theta_f,
+                                   collective_pitch=self.collective_pitch, longitudinal_cyclic=self.longitudinal_cyclic+1.0)
         return fin.u_dot, fin.w_dot, fin.q_dot, fin.theta_f_dot
 
     @Attribute
@@ -254,7 +284,7 @@ class StateSpace(Constants):
 
     def plot_response(self):
 
-        time = np.linspace(0, 50, 100)
+        time = np.linspace(0, 50, 1000)
         delta_t = time[1] - time[0]
         cyclic_input = [0]
         u = [self.u]
@@ -277,8 +307,8 @@ class StateSpace(Constants):
             else:
                 cyclic_input.append(self.longitudinal_cyclic)
 
-            current_case = StateSpace(u=u[i], w=w[i], q=q[i], theta_f=theta_f[i], longitudinal_cyclic=cyclic_input[i],
-                                      collective_pitch=self.collective_pitch)
+            current_case = StabilityDerivatives(u=u[i], w=w[i], q=q[i], theta_f=theta_f[i], longitudinal_cyclic=cyclic_input[i],
+                                                collective_pitch=self.collective_pitch)
 
         end = timer()
         print '\nIntegration Performed \n' + 'Duration: %1.5f [s]\n' % (end - start)
@@ -348,8 +378,14 @@ if __name__ == '__main__':
     trim_case = Trim(30)  # Hover Trim case at V=0
     u = trim_case.velocity*cos(trim_case.fuselage_tilt)
     w = trim_case.velocity*sin(trim_case.fuselage_tilt)
-    obj = StateSpace(u=u, w=w, q=0, theta_f=trim_case.fuselage_tilt,
-                     collective_pitch=trim_case.collective_pitch, longitudinal_cyclic=trim_case.longitudinal_cyclic)
+    obj = StabilityDerivatives(u=u, w=w, q=0, theta_f=trim_case.fuselage_tilt,
+                               collective_pitch=trim_case.collective_pitch, longitudinal_cyclic=trim_case.longitudinal_cyclic)
     print obj.weight_mtow
     obj.plot_response()
-    print obj.x_u
+    print 'State Variables = u, w, q, theta_f'
+    print 'u Derivatives ', obj.u_derivatives
+    print 'w Derivatives ', obj.w_derivatives
+    print 'q Derivatives ', obj.q_derivatives
+    print 'theta_f Derivatives ', obj.theta_f_derivatives
+    print 'collective Derivatives ', obj.collective_derivatives
+    print 'cyclic Derivatives ', obj.cyclic_derivatives

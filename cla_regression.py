@@ -1,7 +1,7 @@
 #  This script will perform the
 #
 #  Airfoil name is from the 'Redesigned Tail rotor...' document in Mendeley.
-#  The Airfoil data is found using XFOIL viscid calculation with the airfoil file from aorfoil tools (flipped)
+#  The Airfoil data is found using XFOIL viscid calculation with the airfoil file from airfoil tools (flipped)
 #  and the reynolds and mach at the mean radius location (R/2). The interpolation returns the C_la.
 
 import os
