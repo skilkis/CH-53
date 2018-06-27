@@ -160,7 +160,7 @@ class StateSpace(Constants):
         if self.velocity == 0:
             ratio = self.hover_induced_velocity / (self.main_rotor.omega * self.main_rotor.radius)
         else:
-            ratio = float((fsolve(func, x0=np.array([1]), args=(self, 'instance_passed'))[0]))
+            ratio = float((fsolve(func, x0=np.array([2e-2]), args=(self, 'instance_passed'))[0]))
 
         return ratio
 
@@ -202,7 +202,7 @@ class StateSpace(Constants):
 
         cg = self.ch53_inertia.get_cg()
         motor_position = self.ch53_inertia.main_rotor.position
-        return abs(cg.z - motor_position.z)
+        return abs(motor_position.z - cg.z)
 
     @Attribute
     def drag(self):
@@ -243,12 +243,18 @@ class StateSpace(Constants):
                sin(self.longitudinal_cyclic - self.longitudinal_disk_tilt)
 
     @Attribute
+    def x_u(self):
+        fin = StateSpace(u=self.u + 1.0, w=self.w, q=self.q, theta_f=self.theta_f,
+                         collective_pitch=self.collective_pitch, longitudinal_cyclic=self.longitudinal_cyclic)
+        return fin.u_dot, fin.w_dot, fin.q_dot, fin.theta_f_dot
+
+    @Attribute
     def theta_f_dot(self):
         return self.q
 
     def plot_response(self):
 
-        time = np.linspace(0, 2, 1000)
+        time = np.linspace(0, 50, 100)
         delta_t = time[1] - time[0]
         cyclic_input = [0]
         u = [self.u]
@@ -265,11 +271,12 @@ class StateSpace(Constants):
             q.append(current_case.q + current_case.q_dot * delta_t)
             theta_f.append(current_case.theta_f + current_case.theta_f_dot * delta_t)
 
-            # Control Inputs
+            # Control Inputs based on Initial Conditions
             if 0.5 < time[i] < 1.0:
-                cyclic_input.append(radians(5.0))
+                cyclic_input.append(self.longitudinal_cyclic + radians(1.0))
             else:
-                cyclic_input.append(0)
+                cyclic_input.append(self.longitudinal_cyclic)
+
             current_case = StateSpace(u=u[i], w=w[i], q=q[i], theta_f=theta_f[i], longitudinal_cyclic=cyclic_input[i],
                                       collective_pitch=self.collective_pitch)
 
@@ -293,7 +300,7 @@ class StateSpace(Constants):
         vel_plot.plot(time, w, label='Vertical')
         vel_plot.set_ylabel(r'Velocity [m/s]')
         vel_plot.set_xlabel('')
-        vel_plot.yaxis.set_major_formatter(FormatStrFormatter('%.3f'))
+        vel_plot.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
         vel_plot.legend(loc='best')
 
         # Creating Labels & Saving Figure
@@ -319,6 +326,7 @@ class StateSpace(Constants):
         q_plot.plot(time, [degrees(rad) for rad in q])
         q_plot.set_ylabel(r'$q$ [deg/s]')
         q_plot.set_xlabel('')
+        # q_plot.yaxis.set_major_formatter(FormatStrFormatter('%.1E'))
         q_plot.yaxis.set_major_formatter(FormatStrFormatter('%.3f'))
 
         theta_plot = fig.add_subplot(gs[2, 0])
@@ -337,11 +345,11 @@ class StateSpace(Constants):
 
 
 if __name__ == '__main__':
-    trim_case = Trim(50)  # Hover Trim case at V=0
+    trim_case = Trim(30)  # Hover Trim case at V=0
     u = trim_case.velocity*cos(trim_case.fuselage_tilt)
-    print u
     w = trim_case.velocity*sin(trim_case.fuselage_tilt)
-    print w
     obj = StateSpace(u=u, w=w, q=0, theta_f=trim_case.fuselage_tilt,
                      collective_pitch=trim_case.collective_pitch, longitudinal_cyclic=trim_case.longitudinal_cyclic)
+    print obj.weight_mtow
     obj.plot_response()
+    print obj.x_u
