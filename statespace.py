@@ -76,17 +76,16 @@ class StateSpace(Constants):
 
     @Attribute
     def b_matrix(self):
-        column_1= self.collective_derivatives
+        column_1 = self.collective_derivatives
         column_2 = self.cyclic_derivatives
         B = np.matrix([column_1, column_2]).T
         return B
 
     @Attribute
     def state_space_solver(self):
-        I = np.array([1, 1, 1, 1])
-        C = np.diag(I)
+        identity = np.array([1, 1, 1, 1])
+        C = np.diag(identity)
         D = np.zeros((4, 2))
-        # return C
         return ss(self.a_matrix, self.b_matrix, C, D)
 
     def step_response(self):
@@ -98,7 +97,7 @@ class StateSpace(Constants):
 
         for i in range(1, len(T)):
             if 0.5 < T[i] < 1.0:
-                cyclic_input.append(radians(20.0))
+                cyclic_input.append(radians(1.0))
             else:
                 cyclic_input.append(cyclic_input[0])
             collective_input.append(collective_input[0])
@@ -107,17 +106,46 @@ class StateSpace(Constants):
         print collective_input
 
         U = np.array([collective_input, cyclic_input]).T
-        #U = np.zeros([len(T), 2])
 
-        yout, T, xout = lsim(sys2, U=U, T=T, input=1)
+        yout, T, xout = lsim(sys2, U=U, T=T)
 
         print xout
 
+        time = T
+        delta_t = time[1] - time[0]
+        cyclic_input = [0]
+        u = [self.stability_derivatives.u]
+        w = [self.stability_derivatives.w]
+        q = [self.stability_derivatives.q]
+        theta_f = [self.stability_derivatives.theta_f]
+        current_case = self.stability_derivatives
+
+        # Forward Euler Integration
+        for i in range(1, len(time)):
+            u.append(current_case.u + current_case.u_dot * delta_t)
+            w.append(current_case.w + current_case.w_dot * delta_t)
+            q.append(current_case.q + current_case.q_dot * delta_t)
+            theta_f.append(current_case.theta_f + current_case.theta_f_dot * delta_t)
+
+            # Control Inputs based on Initial Conditions
+            if 0.5 < time[i] < 1.0:
+                cyclic_input.append(self.stability_derivatives.longitudinal_cyclic + radians(1.0))
+            else:
+                cyclic_input.append(self.stability_derivatives.longitudinal_cyclic)
+
+            current_case = StabilityDerivatives(u=u[i], w=w[i], q=q[i], theta_f=theta_f[i],
+                                                longitudinal_cyclic=cyclic_input[i],
+                                                collective_pitch=self.stability_derivatives.collective_pitch)
+
+
         plt.figure(1)
-        plt.plot(T, [num+self.stability_derivatives.u for num in yout[:, 0]], ':', linewidth=2, label='u')  # U IS CORRECT!
-        plt.plot(T, [num+self.stability_derivatives.w for num in yout[:, 1]], ':', linewidth=2, label='w')
-        plt.plot(T, [degrees(rad + self.stability_derivatives.q) for rad in yout[:, 2]], ':', linewidth=2, label='q')  #  q IS CORRECT
-        plt.plot(T, [degrees(rad + self.stability_derivatives.theta_f) for rad in yout[:, 3]], ':', linewidth=2, label='theta_f')  #  theta_f IS CORRECT
+        plt.style.use('ggplot')
+        plt.plot(T, [num+self.stability_derivatives.u for num in yout[:, 0]], label='u')  # U IS CORRECT!
+        plt.plot(T, u, label='u Euler')
+        plt.plot(T, [num+self.stability_derivatives.w for num in yout[:, 1]], label='w')
+        plt.plot(T, w, label='w Euler')
+        # plt.plot(T, [degrees(rad + self.stability_derivatives.q) for rad in yout[:, 2]], label='q')  #  q IS CORRECT
+        # plt.plot(T, [degrees(rad + self.stability_derivatives.theta_f) for rad in yout[:, 3]], label='theta_f')  #  theta_f IS CORRECT
         # print t2.shape, np.array(y2)
         plt.xlabel('Time')
         plt.ylabel('Response (y)')
@@ -127,16 +155,17 @@ class StateSpace(Constants):
 
 
 if __name__ == '__main__':
-    obj = StateSpace(1.0)
-    print 'State Variables = u, w, q, theta_f'
-    print 'u Derivatives ', obj.u_derivatives
-    print 'w Derivatives ', obj.w_derivatives
-    print 'q Derivatives ', obj.q_derivatives
-    print 'theta_f Derivatives ', obj.theta_f_derivatives
-    print 'collective Derivatives ', obj.collective_derivatives
-    print 'cyclic Derivatives ', obj.cyclic_derivatives
+    obj = StateSpace(5.14444)
+    # print 'State Variables = u, w, q, theta_f'
+    # print 'u Derivatives ', obj.u_derivatives
+    # print 'w Derivatives ', obj.w_derivatives
+    # print 'q Derivatives ', obj.q_derivatives
+    # print 'theta_f Derivatives ', obj.theta_f_derivatives
+    # print 'collective Derivatives ', obj.collective_derivatives
+    # print 'cyclic Derivatives ', obj.cyclic_derivatives
     print 'A Matrix', obj.a_matrix
     print 'B Matrix', obj.b_matrix
-    # print obj.state_space_solver
+
+    print obj.state_space_solver
     obj.step_response()
 

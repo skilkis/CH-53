@@ -244,45 +244,111 @@ class StabilityDerivatives(Constants):
 
     @Attribute
     def u_derivatives(self):
-        fin = StabilityDerivatives(u=self.u + 1.0, w=self.w, q=self.q, theta_f=self.theta_f,
-                                   collective_pitch=self.collective_pitch,
-                                   longitudinal_cyclic=self.longitudinal_cyclic)
-        return fin.u_dot, fin.w_dot, fin.q_dot, fin.theta_f_dot
+        u_dot = []
+        w_dot = []
+        q_dot = []
+        theta_f_dot = []
+        delta_u = np.linspace(-10, 10, 100)
+        for i in delta_u:
+            case = StabilityDerivatives(u=self.u + i, w=self.w, q=self.q, theta_f=self.theta_f,
+                                        collective_pitch=self.collective_pitch,
+                                        longitudinal_cyclic=self.longitudinal_cyclic)
+            u_dot.append(case.u_dot / i)
+            w_dot.append(case.w_dot / i)
+            q_dot.append(case.q_dot / i)
+            theta_f_dot.append(case.theta_f_dot / i)
+
+        return np.mean(u_dot), np.mean(w_dot), np.mean(q_dot), np.mean(theta_f_dot)
 
     @Attribute
     def w_derivatives(self):
-        fin = StabilityDerivatives(u=self.u, w=self.w + 1.0, q=self.q, theta_f=self.theta_f,
-                                   collective_pitch=self.collective_pitch,
-                                   longitudinal_cyclic=self.longitudinal_cyclic)
-        return fin.u_dot, fin.w_dot, fin.q_dot, fin.theta_f_dot
+        u_dot = []
+        w_dot = []
+        q_dot = []
+        theta_f_dot = []
+        delta_u = np.linspace(-10, 10, 100)
+        for i in delta_u:
+            case = StabilityDerivatives(u=self.u, w=self.w + i, q=self.q, theta_f=self.theta_f,
+                                        collective_pitch=self.collective_pitch,
+                                        longitudinal_cyclic=self.longitudinal_cyclic)
+            u_dot.append(case.u_dot / i)
+            w_dot.append(case.w_dot / i)
+            q_dot.append(case.q_dot / i)
+            theta_f_dot.append(case.theta_f_dot / i)
+
+        return np.mean(u_dot), np.mean(w_dot), np.mean(q_dot), np.mean(theta_f_dot)
 
     @Attribute
     def q_derivatives(self):
-        fin = StabilityDerivatives(u=self.u, w=self.w, q=self.q + 1.0, theta_f=self.theta_f,
-                                   collective_pitch=self.collective_pitch,
-                                   longitudinal_cyclic=self.longitudinal_cyclic)
-        return fin.u_dot, fin.w_dot, fin.q_dot, fin.theta_f_dot
+        u_dot = []
+        w_dot = []
+        q_dot = []
+        theta_f_dot = []
+        delta_u = np.linspace(radians(-10), radians(10), 100)
+        for i in delta_u:
+            case = StabilityDerivatives(u=self.u, w=self.w, q=self.q + i, theta_f=self.theta_f,
+                                        collective_pitch=self.collective_pitch,
+                                        longitudinal_cyclic=self.longitudinal_cyclic)
+            u_dot.append(case.u_dot / i)
+            w_dot.append(case.w_dot / i)
+            q_dot.append(case.q_dot / i)
+            theta_f_dot.append(case.theta_f_dot / i)
+
+        return np.mean(u_dot), np.mean(w_dot), np.mean(q_dot), np.mean(theta_f_dot)
 
     @Attribute
     def theta_f_derivatives(self):
-        fin = StabilityDerivatives(u=self.u, w=self.w, q=self.q, theta_f=self.theta_f + 1.0,
-                                   collective_pitch=self.collective_pitch,
-                                   longitudinal_cyclic=self.longitudinal_cyclic)
-        return fin.u_dot, fin.w_dot, fin.q_dot, fin.theta_f_dot
+        u_dot = []
+        w_dot = []
+        q_dot = []
+        theta_f_dot = []
+        delta_u = np.linspace(radians(-10), radians(10), 100)
+        for i in delta_u:
+            case = StabilityDerivatives(u=self.u, w=self.w, q=self.q, theta_f=self.theta_f + i,
+                                        collective_pitch=self.collective_pitch,
+                                        longitudinal_cyclic=self.longitudinal_cyclic)
+            u_dot.append(case.u_dot / i)
+            w_dot.append(case.w_dot / i)
+            q_dot.append(case.q_dot / i)
+            theta_f_dot.append(case.theta_f_dot / i)
+
+        return np.mean(u_dot), np.mean(w_dot), np.mean(q_dot), np.mean(theta_f_dot)
 
     @Attribute
     def collective_derivatives(self):
-        fin = StabilityDerivatives(u=self.u, w=self.w, q=self.q, theta_f=self.theta_f,
-                                   collective_pitch=self.collective_pitch+1.0,
-                                   longitudinal_cyclic=self.longitudinal_cyclic)
-        return fin.u_dot, fin.w_dot, fin.q_dot, fin.theta_f_dot
+        u_dot = []
+        w_dot = []
+        q_dot = []
+        theta_f_dot = []
+        delta_u = np.linspace(radians(-10), radians(10), 100)
+        for i in delta_u:
+            case = StabilityDerivatives(u=self.u, w=self.w, q=self.q, theta_f=self.theta_f,
+                                        collective_pitch=self.collective_pitch + i,
+                                        longitudinal_cyclic=self.longitudinal_cyclic)
+            u_dot.append(case.u_dot / i)
+            w_dot.append(case.w_dot / i)
+            q_dot.append(case.q_dot / i)
+            theta_f_dot.append(case.theta_f_dot / i)
+
+        return np.mean(u_dot), np.mean(w_dot), np.mean(q_dot), np.mean(theta_f_dot)
 
     @Attribute
     def cyclic_derivatives(self):
-        fin = StabilityDerivatives(u=self.u, w=self.w, q=self.q, theta_f=self.theta_f,
-                                   collective_pitch=self.collective_pitch,
-                                   longitudinal_cyclic=self.longitudinal_cyclic+1.0)
-        return fin.u_dot, fin.w_dot, fin.q_dot, fin.theta_f_dot
+        u_dot = []
+        w_dot = []
+        q_dot = []
+        theta_f_dot = []
+        delta_u = np.linspace(radians(-10), radians(10), 100)
+        for i in delta_u:
+            case = StabilityDerivatives(u=self.u, w=self.w, q=self.q, theta_f=self.theta_f,
+                                        collective_pitch=self.collective_pitch,
+                                        longitudinal_cyclic=self.longitudinal_cyclic + i)
+            u_dot.append(case.u_dot / i)
+            w_dot.append(case.w_dot / i)
+            q_dot.append(case.q_dot / i)
+            theta_f_dot.append(case.theta_f_dot / i)
+
+        return np.mean(u_dot), np.mean(w_dot), np.mean(q_dot), np.mean(theta_f_dot)
 
     @Attribute
     def theta_f_dot(self):
@@ -412,17 +478,17 @@ class StabilityDerivatives(Constants):
 
 
 if __name__ == '__main__':
-    trim_case = Trim(30)  # Hover Trim case at V=0
+    trim_case = Trim(10)  # Hover Trim case at V=0
     u = trim_case.velocity*cos(trim_case.fuselage_tilt)
     w = trim_case.velocity*sin(trim_case.fuselage_tilt)
     obj = StabilityDerivatives(u=u, w=w, q=0, theta_f=trim_case.fuselage_tilt,
-                               collective_pitch=trim_case.collective_pitch, longitudinal_cyclic=trim_case.longitudinal_cyclic)
-    print obj.weight_mtow
+                               collective_pitch=trim_case.collective_pitch,
+                               longitudinal_cyclic=trim_case.longitudinal_cyclic)
     obj.plot_response()
-    print 'State Variables = u, w, q, theta_f'
-    print 'u Derivatives ', obj.u_derivatives
-    print 'w Derivatives ', obj.w_derivatives
-    print 'q Derivatives ', obj.q_derivatives
-    print 'theta_f Derivatives ', obj.theta_f_derivatives
-    print 'collective Derivatives ', obj.collective_derivatives
-    print 'cyclic Derivatives ', obj.cyclic_derivatives
+    # print 'State Variables = u, w, q, theta_f'
+    # print 'u Derivatives ', obj.u_derivatives
+    # print 'w Derivatives ', obj.w_derivatives
+    # print 'q Derivatives ', obj.q_derivatives
+    # print 'theta_f Derivatives ', obj.theta_f_derivatives
+    # print 'collective Derivatives ', obj.collective_derivatives
+    # print 'cyclic Derivatives ', obj.cyclic_derivatives
