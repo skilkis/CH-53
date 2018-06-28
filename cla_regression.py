@@ -101,7 +101,7 @@ class LiftGradient(object):
         plt.ion()
         plt.show()
         fig.savefig(fname=os.path.join(dir_path, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
-        return fig
+        return 'Figure Plotted and Saved'
 
 
 if __name__ == '__main__':
