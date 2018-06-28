@@ -1,12 +1,9 @@
 close all
 
 % Trim Condition Input
-initial_velocity = 5.3; % [m/s]
+initial_velocity = 5.14444; % [m/s]
 
 % Maneuver Parameters
-
-
-
 
 %% Running statespace_matlabwrap.py if Necessary
 
