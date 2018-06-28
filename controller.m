@@ -6,6 +6,8 @@ initial_velocity = 5.3; % [m/s]
 % Maneuver Parameters
 
 
+
+
 %% Running statespace_matlabwrap.py if Necessary
 
 trigger_python = 0;
@@ -41,8 +43,15 @@ thetac_initial = import.thetac;
 
 
 %% Running Simulink Model
-open_system('controller_sim') %to open your model
-sim('controller_sim')
+
+dist = strsplit(version,' '); dist = dist{1, 2};
+if ~isempty(strfind(dist,'2018a'))
+    open_system('controller_sim') %to open your model
+    sim('controller_sim')
+else
+    open_system('controller_sim_compat') %to open your model
+    sim('controller_sim_compat')
+end
 
 % states = {'u' 'w' 'q' 'thetaf'};
 % inputs = {'collective' 'cyclic'};
