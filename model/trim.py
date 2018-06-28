@@ -5,7 +5,7 @@
 
 __author__ = ["San Kilkis"]
 
-from globs import Constants, Attribute
+from globs import Constants, Attribute, working_dir
 
 import numpy as np
 from numpy.linalg import inv
@@ -13,8 +13,6 @@ from scipy.optimize import fsolve
 import matplotlib.pyplot as plt
 from math import sqrt, pi, degrees, radians, cos, sin, atan
 import os  # Necessary to determining the current working directory to save figures
-
-_working_dir = os.getcwd()
 
 
 class Input(object):
@@ -221,6 +219,24 @@ class Trim(Constants):
         return self.numerical_solution[1]
 
     @Attribute
+    def u(self):
+        """ Computes the velocity aligned with the x-axis in the Body Axis System
+
+        :return: Horizontal Velocity on the Body x-axis in SI meter per second [m/s]
+        :rtype: float
+        """
+        return self.velocity * cos(self.fuselage_tilt)
+
+    @Attribute
+    def w(self):
+        """ Computes the velocity aligned with the z-axis in the Body Axis System (positive down)
+
+        :return: Vertical Velocity on the Body z-axis in SI meter per second [m/s]
+        :rtype: float
+        """
+        return self.velocity * sin(self.fuselage_tilt)
+
+    @Attribute
     def linearized_solution(self):
 
         # Linearizing the Advance-Ratio by neglecting the effect of the Longitudinal Cyclic (Small Angles)
@@ -252,7 +268,7 @@ class Trim(Constants):
         plt.xlabel(r'True Airspeed, $V_\mathrm{TAS}$ [m/s]')
         plt.ylabel(r'Percentage Error [%]')
         plt.show()
-        fig.savefig(fname=os.path.join(_working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
+        fig.savefig(fname=os.path.join(working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
         return '%s Plotted and Saved' % fig.get_label()
 
     @Attribute
@@ -308,7 +324,7 @@ class Trim(Constants):
         plt.ylabel(r'Required Control Deflection [deg]')
         plt.legend(loc='best')
         plt.show()
-        fig.savefig(fname=os.path.join(_working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
+        fig.savefig(fname=os.path.join(working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
         return '%s Plotted and Saved' % fig.get_label()
 
 

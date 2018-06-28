@@ -13,7 +13,7 @@ import numpy as np
 __author__ = ["San Kilkis", 'Nelson Johnson']
 
 airfoil_file = 'SC1095_data.dat'
-_working_dir = os.getcwd()
+dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
 class LiftGradient(object):
@@ -34,7 +34,7 @@ class LiftGradient(object):
         return self.read_xfoil_data()[1]
 
     def read_xfoil_data(self):
-        data = open(os.path.join(os.getcwd(), self.filename))
+        data = open(os.path.join(dir_path, self.filename))
         lines = data.readlines()[12:]  # Skipping Header
         data.close()
 
@@ -94,15 +94,13 @@ class LiftGradient(object):
                        '\n' r'$\bar{C}_L=%f\cdot\mathrm{\alpha} + %f$' % (gradient, cl_0) +
                        '\n' r'$R^2$ = %0.2f' % r_squared)
 
-
-
         plt.xlabel(r'Angle of Attack [deg]')
         plt.ylabel(r'Lift Coefficient [-]')
         plt.title('Rotor-Blade Lift Coefficient Gradient')
         plt.legend(loc='best')
         plt.ion()
         plt.show()
-        fig.savefig(fname=os.path.join(_working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
+        fig.savefig(fname=os.path.join(dir_path, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
         return fig
 
 

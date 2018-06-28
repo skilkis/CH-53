@@ -5,7 +5,7 @@
 
 # http://python-control.readthedocs.io/en/latest/intro.html most likely this will be required
 
-__author__ = ["Nelson Johnson", "San Kilkis"]
+__author__ = ["San Kilkis", "Nelson Johnson"]
 
 from globs import Constants, Attribute
 from stabilityderivatives import StabilityDerivatives
@@ -34,9 +34,8 @@ class StateSpace(Constants):
     # TODO Consider moving u and w into the class Trim
     @Attribute
     def stability_derivatives(self):
-        u = self.initial_trim_case.velocity * cos(self.initial_trim_case.fuselage_tilt)
-        w = self.initial_trim_case.velocity * sin(self.initial_trim_case.fuselage_tilt)
-        return StabilityDerivatives(u=u, w=w, q=0, theta_f=self.initial_trim_case.fuselage_tilt,
+        return StabilityDerivatives(u=self.initial_trim_case.u, w=self.initial_trim_case.w, q=0,
+                                    theta_f=self.initial_trim_case.fuselage_tilt,
                                     collective_pitch=self.initial_trim_case.collective_pitch,
                                     longitudinal_cyclic=self.initial_trim_case.longitudinal_cyclic)
 
@@ -46,44 +45,76 @@ class StateSpace(Constants):
         column_2 = np.array(self.stability_derivatives.w_derivatives)
         column_3 = np.array(self.stability_derivatives.q_derivatives)
         column_4 = np.array(self.stability_derivatives.theta_f_derivatives)
-        A = np.matrix([column_1, column_2, column_3, column_4]).T
-        return A
+
+        base_matrix = np.matrix([column_1, column_2, column_3, column_4]).T
+
+        # added_row = np.zeros((5, 4))
+        # added_row[:-1, :] = base_matrix
+        #
+        # added_column = np.zeros((5, 5))
+        # added_column[:, :-1] = added_row
+
+        # added_column[4, 3] = -1.0  # Fuselage error depends on the current fuselage angle theta_f
+        return base_matrix
 
     @Attribute
     def b_matrix(self):
         column_1 = np.array(self.stability_derivatives.collective_derivatives)
         column_2 = np.array(self.stability_derivatives.cyclic_derivatives)
-        B = np.matrix([column_1, column_2]).T
-        return B
+
+        base_matrix = np.matrix([column_1, column_2]).T
+
+        # added_row = np.zeros((5, 2))
+        # added_row[:-1, :] = base_matrix
+        #
+        # added_column = np.zeros((5, 3))
+        # added_column[:, :-1] = added_row
+
+        # added_column[4, 2] = 1.0  # Fuselage error depends on the current fuselage angle theta_f
+        return base_matrix
+
+    @Attribute
+    def c_matrix(self):
+        return np.diag([1, 1, 1, 1])
+
+    @Attribute
+    def d_matrix(self):
+        return np.zeros((4, 2))
 
     @Attribute
     def system(self):
+        # C = np.diag([1, 1, 1, 1, 0])
+        # C[4, 3] = -1.0  # Fuselage error depends on the current fuselage angle theta_f
+        # D = np.zeros((5, 3))
+        # D[4, 2] = 1
         C = np.diag([1, 1, 1, 1])
         D = np.zeros((4, 2))
-        return ss(self.a_matrix, self.b_matrix, C, D)
+        return ss(self.a_matrix, self.b_matrix, self.c_matrix, self.d_matrix)
 
-    @Attribute
-    def controller(self):
-        a_matrix = np.zeros((2, 2))
-        b_matrix = np.matrix([[0, 0.2, 0, 0], [-0.5, 0, 0.5, 0]])
-        c_matrix = np.diag([1, 1])
-        d_matrix = np.zeros((2, 4))
-        return ss(a_matrix, b_matrix, c_matrix, d_matrix)
+    # @Attribute
+    # def controller(self):
+    #     a_matrix = np.matrix([[2.0, 0, 0], [0, 0, 0], [0, 0, 0]])  # Integrated Control
+    #     b_matrix = np.zeros((3, 5))
+    #     c_matrix = np.diag([1, 1, 1])
+    #     d_matrix = np.matrix([[0, 0, 0, 0, 0], [0, 0, 0.2, 0, -0.2], [0, 0, 0, 0, 0]])  # Proportional Control
+    #     return ss(a_matrix, b_matrix, c_matrix, d_matrix)
 
     def step_response(self):
         sys1 = self.system
-        sys1 = feedback(sys1, self.controller, +1)
+        # sys1 = feedback(sys1, self.controller, +1)
 
-        T = np.linspace(0, 10, 1000)
+        T = np.linspace(0, 40, 1000)
         cyclic_input = [0]          # delta!!!
         collective_input = [0]
+        desired_pitch = [-self.stability_derivatives.theta_f]
 
         for i in range(1, len(T)):
             if 0.5 < T[i] < 1.0:
-                cyclic_input.append(radians(1.0))
+                cyclic_input.append(radians(0.0))
             else:
                 cyclic_input.append(cyclic_input[0])
             collective_input.append(collective_input[0])
+            desired_pitch.append(-self.stability_derivatives.theta_f)
 
         U = np.array([collective_input, cyclic_input]).T
 
@@ -92,7 +123,7 @@ class StateSpace(Constants):
         plt.figure(1)
         plt.style.use('ggplot')
         plt.plot(T, [num+self.stability_derivatives.u for num in yout[:, 0]], label='u')  # U IS CORRECT!
-        # plt.plot(T, [num+self.stability_derivatives.w for num in yout[:, 1]], label='w')
+        plt.plot(T, [num+self.stability_derivatives.w for num in yout[:, 1]], label='w')
         # plt.plot(T, [degrees(rad + self.stability_derivatives.q) for rad in yout[:, 2]], label='q')  #  q IS CORRECT
         # plt.plot(T, [degrees(rad + self.stability_derivatives.theta_f) for rad in yout[:, 3]], label='theta_f')  #  theta_f IS CORRECT
         # print t2.shape, np.array(y2)
@@ -103,8 +134,8 @@ class StateSpace(Constants):
 
         plt.figure(2)
         plt.style.use('ggplot')
-        plt.plot(T, [num+self.stability_derivatives.q for num in yout[:, 2]], label='q')  # U IS CORRECT!
-        plt.plot(T, [num+self.stability_derivatives.theta_f for num in yout[:, 3]], label='theta_f')
+        plt.plot(T, [degrees(num+self.stability_derivatives.q) for num in yout[:, 2]], label='q')  # U IS CORRECT!
+        plt.plot(T, [degrees(num+self.stability_derivatives.theta_f) for num in yout[:, 3]], label='theta_f')
         # plt.plot(T, [degrees(rad + self.stability_derivatives.q) for rad in yout[:, 2]], label='q')  #  q IS CORRECT
         # plt.plot(T, [degrees(rad + self.stability_derivatives.theta_f) for rad in yout[:, 3]], label='theta_f')  #  theta_f IS CORRECT
         # print t2.shape, np.array(y2)
@@ -112,6 +143,17 @@ class StateSpace(Constants):
         plt.ylabel('Response (y)')
         plt.legend(loc='best')
         plt.show()
+
+        # plt.figure(3)
+        # plt.style.use('ggplot')
+        # plt.plot(T, [degrees(num) for num in yout[:, 4]], label='theta_f')
+        # # plt.plot(T, [degrees(rad + self.stability_derivatives.q) for rad in yout[:, 2]], label='q')  #  q IS CORRECT
+        # # plt.plot(T, [degrees(rad + self.stability_derivatives.theta_f) for rad in yout[:, 3]], label='theta_f')  #  theta_f IS CORRECT
+        # # print t2.shape, np.array(y2)
+        # plt.xlabel('Time')
+        # plt.ylabel('Response (y)')
+        # plt.legend(loc='best')
+        # plt.show()
         return 'Plotted'
 
 
@@ -192,7 +234,8 @@ if __name__ == '__main__':
     # print 'cyclic Derivatives ', obj.cyclic_derivatives
     print 'A Matrix', obj.a_matrix
     print 'B Matrix', obj.b_matrix
+    print 'Fuselage Pitch', degrees(obj.stability_derivatives.theta_f)
 
-    print obj.system
+    # print obj.system
     obj.step_response()
 

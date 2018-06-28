@@ -7,6 +7,9 @@ from math import pi, sqrt
 from collections import namedtuple
 from masses import ComponentWeights
 from cla_regression import LiftGradient
+import os
+
+working_dir = os.getcwd()
 
 # Inputs
 g = 9.81  # Gravitational Acceleration [m/s**2]
