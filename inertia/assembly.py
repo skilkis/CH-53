@@ -1,8 +1,9 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# from components import Battery
+
 """ This file contains the class definition used to estimate the Mass Moment of Inertia of the CH53 Helicopter """
 
-from inertia.primitives import *
+from primitives import *
 
 __author__ = ["San Kilkis"]
 

@@ -9,7 +9,7 @@ __author__ = ["San Kilkis"]
 
 from globs import Constants, Attribute, working_dir
 from ch53_inertia import CH53Inertia
-from trim import Trim
+from model.trim import Trim
 from timeit import default_timer as timer
 
 import numpy as np

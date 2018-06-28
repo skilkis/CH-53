@@ -5,7 +5,7 @@
 
 __author__ = ["San Kilkis"]
 
-from inertia.component import *
+from component import *
 
 
 class Box(Component):
