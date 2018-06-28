@@ -76,7 +76,7 @@ class StateSpace(Constants):
 
     @Attribute
     def c_matrix(self):
-        return np.diag([1, 1, 1, 1])
+        return np.diag([1., 1., 1., 1.])
 
     @Attribute
     def d_matrix(self):
@@ -224,7 +224,7 @@ class StateSpace(Constants):
                                                 collective_pitch=self.initial_trim_case.collective_pitch)
 
         end = timer()
-        print ('\nIntegration Performed \n' + 'Duration: %1.5f [s]\n' % (end - start))
+        print ('Integration Performed \n' + 'Duration: %1.5f [s]\n' % (end - start))
 
         # Plotting Response
         fig = plt.figure('EulervsStateVelocities')
@@ -303,6 +303,5 @@ if __name__ == '__main__':
     print ('A Matrix', obj.a_matrix)
     print ('B Matrix', obj.b_matrix)
     print ('Fuselage Pitch', degrees(obj.stability_derivatives.theta_f))
-
     obj.plot_response()
 

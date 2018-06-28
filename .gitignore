@@ -3,3 +3,6 @@
 
 # User-Config Files
 *.cfg
+
+# Simulink Autosave Files
+.autosave
