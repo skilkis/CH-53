@@ -11,6 +11,8 @@ import os
 
 working_dir = os.getcwd()
 
+# TODO Remove the following attributes and put them into OOP for lazy-evaluation
+
 # Inputs
 g = 9.81  # Gravitational Acceleration [m/s**2]
 

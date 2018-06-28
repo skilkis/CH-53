@@ -9,7 +9,7 @@ __author__ = ["San Kilkis"]
 
 from globs import Constants, Attribute, working_dir
 from ch53_inertia import CH53Inertia
-from model.trim import Trim
+from trim import Trim
 from timeit import default_timer as timer
 
 import numpy as np
@@ -412,7 +412,7 @@ class StabilityDerivatives(Constants):
                                                 collective_pitch=self.collective_pitch)
 
         end = timer()
-        print '\nIntegration Performed \n' + 'Duration: %1.5f [s]\n' % (end - start)
+        print ('\nIntegration Performed \n' + 'Duration: %1.5f [s]\n' % (end - start))
 
         # Plotting Response
         fig = plt.figure('EulerResponseVelocities')
@@ -435,7 +435,7 @@ class StabilityDerivatives(Constants):
         vel_plot.legend(loc='best')
 
         # Creating Labels & Saving Figure
-        plt.suptitle(r'Translational Response as a Function of Time')
+        plt.suptitle(r'Velocity Response as a Function of Time')
         plt.xlabel(r'Time [s]')
         plt.show()
         fig.savefig(fname=os.path.join(working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
