@@ -10,7 +10,6 @@ setup(name='CH53',
       packages=['CH53'],
       install_requires=[
           'numpy',
-          'math',
           'matplotlib',
           'scipy',
           'control',
