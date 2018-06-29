@@ -5,9 +5,8 @@
 
 __author__ = ["San Kilkis"]
 
-from globs import Constants
-from masses import ComponentWeights
-from cla_regression import LiftGradient
+import __root__
+from globs import Constants, Attribute, working_dir
 
 import numpy as np
 from scipy import integrate
@@ -18,24 +17,7 @@ import matplotlib.gridspec as gridspec
 from math import radians, sqrt, pi, degrees, cos, sin, asin
 from basic_units import radians as rad_ticks  # Renaming to remove conflict with built-in package
 import os  # Necessary to determining the current working directory to save figures
-
-_working_dir = os.getcwd()
-
-
-class Attribute(object):
-    """ A decorator that is used for lazy evaluation of an object attribute.
-    property should represent non-mutable data, as it replaces itself. """
-
-    def __init__(self, fget):
-        self.fget = fget
-        self.func_name = fget.__name__
-
-    def __get__(self, obj, cls):
-        if obj is None:
-            return None
-        value = self.fget(obj)
-        setattr(obj, self.func_name, value)
-        return value
+assert __root__
 
 
 class ForwardFlapping(Constants):
@@ -49,42 +31,6 @@ class ForwardFlapping(Constants):
         self.lateral_cyclic = lateral_cyclic
         self.longitudinal_cyclic = longitudinal_cyclic
         self.velocity = velocity
-
-    @Attribute
-    def weights(self):
-        """ Instantiates the Weight Estimating Relationships class to be accessed by the rest of the class
-
-        :return: Class containing all Component Weights
-        """
-        return ComponentWeights()
-
-    @Attribute
-    def inertia_blade(self):
-        """ Single blade Mass Moment of Inertia about the flapping hinge assuming that the blade length runs from
-        hub-center to tip.
-
-        :return: Mass Moment of Inertia in SI kilogram meter squared [kg m^2]
-        """
-        return (1.0/3.0) * \
-               (self.weights.kg_to_lbs(self.weights.W_2A, power=-1) /
-                self.main_rotor.blade_number) * self.main_rotor.radius**2
-
-    @Attribute
-    def lift_gradient(self):
-        """ Lift coefficient gradient of the CH-53D main rotor (SC1095 Airfoil)
-
-        :return: Lift Coefficient Gradient in SI one over radians [1/rad]
-        """
-        return LiftGradient().gradient
-
-    @Attribute
-    def lock_number(self):
-        """ Represents the ratio of aerodynamic excitation forces to the inertial forces on the blade
-
-        :return: Non-Dimensional Lock Number [-]
-        """
-        return (self.rho * self.lift_gradient * self.main_rotor.chord * (self.main_rotor.radius ** 4)) \
-                / self.inertia_blade
 
     @Attribute
     def hover_induced_velocity(self):
@@ -163,9 +109,7 @@ class ForwardFlapping(Constants):
 
         omega = self.main_rotor.omega  # Renaming the rotational velocity to make the function definition shorter
         lock = self.lock_number  # Renaming the lock number to make the function definition short
-        # m_a = self.aerodynamic_moment  # Renaming the non-zero Aerodynamic Moment forcing term
         theta = self.collective_pitch
-        r = self.main_rotor.radius
         mu = self.tip_speed_ratio
         lambda_c = self.inflow_ratio_control
         lambda_i = self.inflow_ratio
@@ -314,7 +258,7 @@ class ForwardFlapping(Constants):
         ax.set_title("Adv. Blade Element AoA vs. Azimuth and Radius", va='bottom')
         ax.set_xlabel(r'Blade Azimuth $\psi$ [rad]')
         plt.show()
-        fig.savefig(fname=os.path.join(_working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
+        fig.savefig(fname=os.path.join(working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
         return 'Plot Created and Saved'
 
     def plot_response(self):
@@ -344,17 +288,9 @@ class ForwardFlapping(Constants):
                      % (self.initial_condition[0], self.initial_condition[1]))
 
         plt.show()
-        fig.savefig(fname=os.path.join(_working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
+        fig.savefig(fname=os.path.join(working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
 
 
 if __name__ == '__main__':
     obj = ForwardFlapping(velocity=20)
     obj.plot_response()
-
-    # print 'Con. Angle = ' + str(degrees(obj.coning_angle))
-    # print 'Long. Tilt = ' + str(degrees(obj.longitudinal_tilt))
-    # print 'Lat. Tilt = ' + str(degrees(obj.lateral_tilt))
-    #
-    # print 'Con. Angle = ' + str(obj.coning_angle)
-    # print 'Long. Tilt = ' + str(obj.longitudinal_tilt)
-    # print 'Lat. Tilt = ' + str(obj.lateral_tilt)

@@ -2,7 +2,8 @@
 # from components import Battery
 """ This file contains the class definition used to estimate the Mass Moment of Inertia of the CH53 Helicopter """
 
-from inertia import *
+
+from definitions import *
 
 __author__ = ["San Kilkis"]
 
@@ -222,5 +223,5 @@ class CH53Inertia(Assembly):
 
 if __name__ == '__main__':
     obj = CH53Inertia()
-    print obj.get_cg()
-    print obj.get_inertia()
+    print (obj.get_cg())
+    print (obj.get_inertia())

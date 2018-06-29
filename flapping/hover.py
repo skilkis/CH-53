@@ -5,10 +5,8 @@
 
 __author__ = ["San Kilkis"]
 
-from globs import Constants
-from masses import ComponentWeights
-from cla_regression import LiftGradient
-
+import __root__
+from globs import Constants, Attribute, working_dir
 import numpy as np
 from scipy import integrate
 from scipy.interpolate import interp1d
@@ -17,70 +15,21 @@ import matplotlib.gridspec as gridspec
 from math import radians, sqrt, pi, degrees, cos
 from basic_units import radians as rad_ticks  # Renaming to remove conflict with built-in package
 import os  # Necessary to determining the current working directory to save figures
+assert __root__
 
-_working_dir = os.getcwd()
-
-
-class Attribute(object):
-    """ A decorator that is used for lazy evaluation of an object attribute.
-    property should represent non-mutable data, as it replaces itself. """
-
-    def __init__(self, fget):
-        self.fget = fget
-        self.func_name = fget.__name__
-
-    def __get__(self, obj, cls):
-        if obj is None:
-            return None
-        value = self.fget(obj)
-        setattr(obj, self.func_name, value)
-        return value
+# TODO Fully comment the code
 
 
 class HoverFlapping(Constants):
     """ Defines the Flapping Dynamics of the CH-53D in Hovering Flight.
 
-    :param collective_pitch: Collective Pitch of the Main Rotor Blades in SI radian [rad]"""
+    :param collective_pitch: Collective Pitch of the Main Rotor Blades in SI radian [rad]
+    :type collective_pitch: float
+    """
 
     def __init__(self, collective_pitch=radians(8), excitation=False):
         self.collective_pitch = collective_pitch
         self.excitation = excitation
-
-    @Attribute
-    def weights(self):
-        """ Instantiates the Weight Estimating Relationships class to be accessed by the rest of the class
-
-        :return: Class containing all Component Weights
-        """
-        return ComponentWeights()
-
-    @Attribute
-    def inertia_blade(self):
-        """ Single blade Mass Moment of Inertia about the flapping hinge assuming that the blade length runs from
-        hub-center to tip.
-
-        :return: Mass Moment of Inertia in SI kilogram meter squared [kg m^2]
-        """
-        return (1.0/3.0) * \
-               (self.weights.kg_to_lbs(self.weights.W_2A, power=-1) /
-                self.main_rotor.blade_number) * self.main_rotor.radius**2
-
-    @Attribute
-    def lift_gradient(self):
-        """ Lift coefficient gradient of the CH-53D main rotor (SC1095 Airfoil)
-
-        :return: Lift Coefficient Gradient in SI one over radians [1/rad]
-        """
-        return LiftGradient().gradient
-
-    @Attribute
-    def lock_number(self):
-        """ Represents the ratio of aerodynamic excitation forces to the inertial forces on the blade
-
-        :return: Non-Dimensional Lock Number [-]
-        """
-        return (self.rho * self.lift_gradient * self.main_rotor.chord * (self.main_rotor.radius ** 4)) \
-                / self.inertia_blade
 
     @Attribute
     def hover_induced_velocity(self):
@@ -191,7 +140,7 @@ class HoverFlapping(Constants):
 
         levels = [i for i in np.arange(-5, 6, 1.0)]
         cmap = plt.get_cmap('jet')
-        cmap_grey = plt.get_cmap('Greys')
+        # cmap_grey = plt.get_cmap('Greys')
         X, Y = np.meshgrid(azimuth, radii)
         contour_plot = ax.contour(X, Y, alpha, cmap=cmap, levels=levels)
         ax.set_rlabel_position(-22.5)  # get radial labels away from plotted line
@@ -203,7 +152,7 @@ class HoverFlapping(Constants):
         ax.set_title("Adv. Blade Element AoA vs. Azimuth and Radius", va='bottom')
         ax.set_xlabel(r'Blade Azimuth $\psi$ [rad]')
         plt.show()
-        fig.savefig(fname=os.path.join(_working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
+        fig.savefig(fname=os.path.join(working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
         return 'Plot Created and Saved'
 
     def plot_response(self):
@@ -235,13 +184,15 @@ class HoverFlapping(Constants):
                      % (self.initial_condition[0], self.initial_condition[1]))
 
         plt.show()
-        fig.savefig(fname=os.path.join(_working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
+        fig.savefig(fname=os.path.join(working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
 
 
 if __name__ == '__main__':
     obj = HoverFlapping()
-    print obj.coning_angle
+    print (obj.__doc__)
+    print (obj.coning_angle)
 
+    obj.plot_alpha()
     # print obj.coning_angle
     # obj.plot_alpha()
     # obj.plot_response()

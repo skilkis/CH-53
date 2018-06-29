@@ -6,6 +6,7 @@
 from primitives import *
 
 __author__ = ["San Kilkis"]
+__all__ = ["Part", "Assembly"]
 
 
 class Part(property):

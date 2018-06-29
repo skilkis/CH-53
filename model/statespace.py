@@ -7,16 +7,18 @@
 
 __author__ = ["San Kilkis", "Nelson Johnson"]
 
+import __root__
 from globs import Constants, Attribute, working_dir
 from stabilityderivatives import StabilityDerivatives
 from trim import Trim
 from control.matlab import *
-from math import sin, cos, radians, degrees
+from math import radians, degrees
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from matplotlib.ticker import FormatStrFormatter
 import os
 from timeit import default_timer as timer
+assert __root__
 
 
 class StateSpace(Constants):
@@ -46,33 +48,13 @@ class StateSpace(Constants):
         column_2 = np.array(self.stability_derivatives.w_derivatives)
         column_3 = np.array(self.stability_derivatives.q_derivatives)
         column_4 = np.array(self.stability_derivatives.theta_f_derivatives)
-
-        base_matrix = np.matrix([column_1, column_2, column_3, column_4]).T
-
-        # added_row = np.zeros((5, 4))
-        # added_row[:-1, :] = base_matrix
-        #
-        # added_column = np.zeros((5, 5))
-        # added_column[:, :-1] = added_row
-
-        # added_column[4, 3] = -1.0  # Fuselage error depends on the current fuselage angle theta_f
-        return base_matrix
+        return np.matrix([column_1, column_2, column_3, column_4]).T
 
     @Attribute
     def b_matrix(self):
         column_1 = np.array(self.stability_derivatives.collective_derivatives)
         column_2 = np.array(self.stability_derivatives.cyclic_derivatives)
-
-        base_matrix = np.matrix([column_1, column_2]).T
-
-        # added_row = np.zeros((5, 2))
-        # added_row[:-1, :] = base_matrix
-        #
-        # added_column = np.zeros((5, 3))
-        # added_column[:, :-1] = added_row
-
-        # added_column[4, 2] = 1.0  # Fuselage error depends on the current fuselage angle theta_f
-        return base_matrix
+        return np.matrix([column_1, column_2]).T
 
     @Attribute
     def c_matrix(self):
@@ -84,21 +66,8 @@ class StateSpace(Constants):
 
     @Attribute
     def system(self):
-        # C = np.diag([1, 1, 1, 1, 0])
-        # C[4, 3] = -1.0  # Fuselage error depends on the current fuselage angle theta_f
-        # D = np.zeros((5, 3))
-        # D[4, 2] = 1
-        C = np.diag([1, 1, 1, 1])
-        D = np.zeros((4, 2))
         return ss(self.a_matrix, self.b_matrix, self.c_matrix, self.d_matrix)
 
-    # @Attribute
-    # def controller(self):
-    #     a_matrix = np.matrix([[2.0, 0, 0], [0, 0, 0], [0, 0, 0]])  # Integrated Control
-    #     b_matrix = np.zeros((3, 5))
-    #     c_matrix = np.diag([1, 1, 1])
-    #     d_matrix = np.matrix([[0, 0, 0, 0, 0], [0, 0, 0.2, 0, -0.2], [0, 0, 0, 0, 0]])  # Proportional Control
-    #     return ss(a_matrix, b_matrix, c_matrix, d_matrix)
 
     def plot_derivatives(self):
         velocities = np.linspace(0, 75, 20)
@@ -163,20 +132,9 @@ class StateSpace(Constants):
         plt.ylabel('Response (y)')
         plt.legend(loc='best')
         plt.show()
-
-        # plt.figure(3)
-        # plt.style.use('ggplot')
-        # plt.plot(T, [degrees(num) for num in yout[:, 4]], label='theta_f')
-        # # plt.plot(T, [degrees(rad + self.stability_derivatives.q) for rad in yout[:, 2]], label='q')  #  q IS CORRECT
-        # # plt.plot(T, [degrees(rad + self.stability_derivatives.theta_f) for rad in yout[:, 3]], label='theta_f')  #  theta_f IS CORRECT
-        # # print t2.shape, np.array(y2)
-        # plt.xlabel('Time')
-        # plt.ylabel('Response (y)')
-        # plt.legend(loc='best')
-        # plt.show()
         return 'Plotted'
 
-    def plot_response(self):
+    def plot_comparison(self):
         start = timer()
         linearized_system = self.system
 
@@ -303,5 +261,5 @@ if __name__ == '__main__':
     print ('A Matrix', obj.a_matrix)
     print ('B Matrix', obj.b_matrix)
     print ('Fuselage Pitch', degrees(obj.stability_derivatives.theta_f))
-    obj.plot_response()
+    obj.plot_comparison()
 

@@ -9,7 +9,7 @@ from masses import ComponentWeights
 from cla_regression import LiftGradient
 import os
 
-working_dir = os.getcwd()
+working_dir = os.path.dirname(os.path.realpath(__file__))
 
 # TODO Remove the following attributes and put them into OOP for lazy-evaluation
 
@@ -226,10 +226,10 @@ class Constants(object):
         :return: Non-Dimensional Lock Number [-]
         """
         return (self.rho * self.lift_gradient * self.main_rotor.chord * (self.main_rotor.radius ** 4)) \
-               / self.inertia_blade
+            / self.inertia_blade
 
 
 if __name__ == '__main__':
     obj = Constants()
-    print obj
+    print (obj)
 

@@ -1,1 +1,1 @@
-from assembly import *
+from inertia.definitions.assembly import *

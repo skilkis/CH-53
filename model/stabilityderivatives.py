@@ -7,8 +7,9 @@
 
 __author__ = ["San Kilkis"]
 
+import __root__
 from globs import Constants, Attribute, working_dir
-from ch53_inertia import CH53Inertia
+from inertia.ch53_inertia import CH53Inertia
 from trim import Trim
 from timeit import default_timer as timer
 
@@ -17,8 +18,11 @@ from scipy.optimize import fsolve
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from matplotlib.ticker import FormatStrFormatter
-from math import radians, sqrt, pi, degrees, cos, sin, asin, atan, exp
+from math import radians, sqrt, pi, degrees, cos, sin, atan, exp
 import os  # Necessary to determining the current working directory to save figures
+assert __root__
+
+# TODO Comment code fully
 
 
 class StabilityDerivatives(Constants):
@@ -481,10 +485,3 @@ if __name__ == '__main__':
                                collective_pitch=trim_case.collective_pitch,
                                longitudinal_cyclic=trim_case.longitudinal_cyclic)
     obj.plot_response()
-    # print 'State Variables = u, w, q, theta_f'
-    # print 'u Derivatives ', obj.u_derivatives
-    # print 'w Derivatives ', obj.w_derivatives
-    # print 'q Derivatives ', obj.q_derivatives
-    # print 'theta_f Derivatives ', obj.theta_f_derivatives
-    # print 'collective Derivatives ', obj.collective_derivatives
-    # print 'cyclic Derivatives ', obj.cyclic_derivatives
