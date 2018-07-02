@@ -42,7 +42,7 @@ class ProgressBar(threading.Thread):
     """
 
     def __init__(self, header=None, prefix='Progress', suffix='Complete', decimals=1,
-                 bar_length=50, show_time=True, threaded=True):
+                 bar_length=50, show_time=True, threaded=False):
 
         threading.Thread.__init__(self)  # Initializes in a new thread
 
@@ -74,9 +74,9 @@ class ProgressBar(threading.Thread):
     def run(self):
         """ Executes a running-process in a new thread that updates the progress-bar with the elapsed time. Note this
         process is only executed if :param:`threaded` is True. """
-        refresh_rate = 10000000  # [Hz]
+        refresh_rate = 3  # [Hz]
         while not self.complete:
-            # sleep(1/float(refresh_rate))
+            sleep(1/float(refresh_rate))
             self._writer()
 
     @property
@@ -94,7 +94,7 @@ class ProgressBar(threading.Thread):
         :return: Formatted string depicting the time elapsed after :class:`ProgressTimer` has been called
         :rtype: str
         """
-        elapsed_time = self.current_time if not self.complete else self.stop_time
+        elapsed_time = self.current_time - self.start_time if not self.complete else self.stop_time - self.start_time
         return 'Elapsed Time: %3.4f [s],' % elapsed_time if self.show_time else ''
 
     def _writer(self):
@@ -149,14 +149,11 @@ class ProgressBar(threading.Thread):
 
 if __name__ == '__main__':
     start = timer()
-    obj = ProgressBar(threaded=True)
-    print('%s' % (timer() - start))  # End Time
-
-    start = timer()
+    prog = ProgressBar('Sample Process')
     for i in range(0, 6):
         sleep(1)
-        obj.update_loop(i, 5, update_msg='%1.2f' % i)
-    print('%s' % (timer() - start))  # End Time
+        prog.update_loop(i, 5, update_msg='%1.2f' % i)
+
 
 
 
