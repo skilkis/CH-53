@@ -18,6 +18,7 @@ import matplotlib.gridspec as gridspec
 from matplotlib.ticker import FormatStrFormatter
 import os
 from timeit import default_timer as timer
+from utils import ProgressBar
 assert __root__
 
 
@@ -67,7 +68,6 @@ class StateSpace(Constants):
     @Attribute
     def system(self):
         return ss(self.a_matrix, self.b_matrix, self.c_matrix, self.d_matrix)
-
 
     def plot_derivatives(self):
         velocities = np.linspace(0, 75, 20)
@@ -135,7 +135,8 @@ class StateSpace(Constants):
         return 'Plotted'
 
     def plot_comparison(self):
-        start = timer()
+        print('\nPerforming Linear Simulation')
+        pbar = ProgressBar(threaded=False)
         linearized_system = self.system
 
         time = np.linspace(0, 40, 1000)
@@ -157,9 +158,9 @@ class StateSpace(Constants):
 
         # Simulating the Linear System
         yout, time, xout = lsim(linearized_system, U=input_matrix, T=time)
-        end = timer()
 
-        print ('\nLinear Simulation Performed \n' + 'Duration: %1.5f [s]\n' % (end - start))
+        pbar.update(100)
+        # print ('\nLinear Simulation Performed \n' + 'Duration: %1.5f [s]\n' % (end - start))
 
         delta_t = time[1] - time[0]
         u = [self.stability_derivatives.u]
@@ -169,7 +170,8 @@ class StateSpace(Constants):
         current_case = self.stability_derivatives
 
         # Forward Euler Integration
-        start = timer()
+        print('Performing Forward Euler Integration')
+        pbar = ProgressBar()
         for i in range(1, len(time)):
             u.append(current_case.u + current_case.u_dot * delta_t)
             w.append(current_case.w + current_case.w_dot * delta_t)
@@ -180,78 +182,79 @@ class StateSpace(Constants):
                                                 longitudinal_cyclic=cyclic_input[i] +
                                                                     self.initial_trim_case.longitudinal_cyclic,
                                                 collective_pitch=self.initial_trim_case.collective_pitch)
+            pbar.update_loop(i, len(time)-1)
 
-        end = timer()
-        print ('Integration Performed \n' + 'Duration: %1.5f [s]\n' % (end - start))
+        # end = timer()
+        # print ('Integration Performed \n' + 'Duration: %1.5f [s]\n' % (end - start))
 
-        # Plotting Response
-        fig = plt.figure('EulervsStateVelocities')
-        plt.style.use('ggplot')
-        gs = gridspec.GridSpec(2, 1, top=0.9)
-
-        cyc_plot = fig.add_subplot(gs[0, 0])
-        cyc_plot.plot(time, [degrees(rad) for rad in cyclic_input])
-        cyc_plot.set_ylabel(r'Lon. Cyclic [deg]')
-        cyc_plot.set_xlabel('')
-        cyc_plot.yaxis.set_major_formatter(FormatStrFormatter('%.3f'))
-
-        vel_plot = fig.add_subplot(gs[1, 0])
-        vel_plot.plot(time, u, label='Horizontal')
-        vel_plot.plot(time, w, label='Vertical')
-        plt.plot(time, [num+self.stability_derivatives.u for num in yout[:, 0]], linestyle=':', color='black')
-        plt.plot(time, [num+self.stability_derivatives.w for num in yout[:, 1]], linestyle=':', color='black',
-                 label='Lin. Simulation')
-        vel_plot.set_ylabel(r'Velocity [m/s]')
-        vel_plot.set_xlabel('')
-        vel_plot.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
-        vel_plot.legend(loc='best')
-
-        # Creating Labels & Saving Figure
-        plt.suptitle(r'Velocity Response as a Function of Time')
-        plt.xlabel(r'Time [s]')
-        plt.show()
-        fig.set_tight_layout('False')
-        fig.savefig(fname=os.path.join(working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
-
-        # Creating Second Figure
-        fig = plt.figure('EulervsStateAngles')
-        plt.style.use('ggplot')
-        gs = gridspec.GridSpec(3, 1, top=0.925, left=0.15)
-
-        cyc_plot = fig.add_subplot(gs[0, 0])
-        cyc_plot.plot(time, [degrees(rad) for rad in cyclic_input])
-        cyc_plot.set_ylabel(r'$\theta_{ls}$ [deg]')
-        cyc_plot.yaxis.set_major_formatter(FormatStrFormatter('%.3f'))
-
-        q_plot = fig.add_subplot(gs[1, 0])
-        q_plot.plot(time, [degrees(rad) for rad in q])
-        plt.plot(time, [degrees(num+self.stability_derivatives.q) for num in yout[:, 2]],
-                 linestyle=':',
-                 color='black',
-                 label='Lin. Simulation')
-        q_plot.set_ylabel(r'$q$ [deg/s]')
-        q_plot.set_xlabel('')
-        # q_plot.yaxis.set_major_formatter(FormatStrFormatter('%.1E'))
-        q_plot.yaxis.set_major_formatter(FormatStrFormatter('%.3f'))
-        q_plot.legend(loc='best')
-
-        theta_plot = fig.add_subplot(gs[2, 0])
-        theta_plot.plot(time, [degrees(rad) for rad in theta_f])
-        plt.plot(time, [degrees(num+self.stability_derivatives.theta_f) for num in yout[:, 3]],
-                 linestyle=':',
-                 color='black',
-                 label='Lin. Simulation')
-        theta_plot.set_ylabel(r'$\theta_f$ [deg]')
-        theta_plot.set_xlabel('')
-        theta_plot.yaxis.set_major_formatter(FormatStrFormatter('%.3f'))
-        theta_plot.legend(loc='best')
-
-        # Creating Labels & Saving Figure
-        plt.suptitle(r'Angular Response as a Function of Time')
-        plt.xlabel(r'Time [s]')
-        plt.show()
-        fig.set_tight_layout('False')
-        fig.savefig(fname=os.path.join(working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
+        # # Plotting Response
+        # fig = plt.figure('EulervsStateVelocities')
+        # plt.style.use('ggplot')
+        # gs = gridspec.GridSpec(2, 1, top=0.9)
+        #
+        # cyc_plot = fig.add_subplot(gs[0, 0])
+        # cyc_plot.plot(time, [degrees(rad) for rad in cyclic_input])
+        # cyc_plot.set_ylabel(r'Lon. Cyclic [deg]')
+        # cyc_plot.set_xlabel('')
+        # cyc_plot.yaxis.set_major_formatter(FormatStrFormatter('%.3f'))
+        #
+        # vel_plot = fig.add_subplot(gs[1, 0])
+        # vel_plot.plot(time, u, label='Horizontal')
+        # vel_plot.plot(time, w, label='Vertical')
+        # plt.plot(time, [num+self.stability_derivatives.u for num in yout[:, 0]], linestyle=':', color='black')
+        # plt.plot(time, [num+self.stability_derivatives.w for num in yout[:, 1]], linestyle=':', color='black',
+        #          label='Lin. Simulation')
+        # vel_plot.set_ylabel(r'Velocity [m/s]')
+        # vel_plot.set_xlabel('')
+        # vel_plot.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+        # vel_plot.legend(loc='best')
+        #
+        # # Creating Labels & Saving Figure
+        # plt.suptitle(r'Velocity Response as a Function of Time')
+        # plt.xlabel(r'Time [s]')
+        # plt.show()
+        # fig.set_tight_layout('False')
+        # fig.savefig(fname=os.path.join(working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
+        #
+        # # Creating Second Figure
+        # fig = plt.figure('EulervsStateAngles')
+        # plt.style.use('ggplot')
+        # gs = gridspec.GridSpec(3, 1, top=0.925, left=0.15)
+        #
+        # cyc_plot = fig.add_subplot(gs[0, 0])
+        # cyc_plot.plot(time, [degrees(rad) for rad in cyclic_input])
+        # cyc_plot.set_ylabel(r'$\theta_{ls}$ [deg]')
+        # cyc_plot.yaxis.set_major_formatter(FormatStrFormatter('%.3f'))
+        #
+        # q_plot = fig.add_subplot(gs[1, 0])
+        # q_plot.plot(time, [degrees(rad) for rad in q])
+        # plt.plot(time, [degrees(num+self.stability_derivatives.q) for num in yout[:, 2]],
+        #          linestyle=':',
+        #          color='black',
+        #          label='Lin. Simulation')
+        # q_plot.set_ylabel(r'$q$ [deg/s]')
+        # q_plot.set_xlabel('')
+        # # q_plot.yaxis.set_major_formatter(FormatStrFormatter('%.1E'))
+        # q_plot.yaxis.set_major_formatter(FormatStrFormatter('%.3f'))
+        # q_plot.legend(loc='best')
+        #
+        # theta_plot = fig.add_subplot(gs[2, 0])
+        # theta_plot.plot(time, [degrees(rad) for rad in theta_f])
+        # plt.plot(time, [degrees(num+self.stability_derivatives.theta_f) for num in yout[:, 3]],
+        #          linestyle=':',
+        #          color='black',
+        #          label='Lin. Simulation')
+        # theta_plot.set_ylabel(r'$\theta_f$ [deg]')
+        # theta_plot.set_xlabel('')
+        # theta_plot.yaxis.set_major_formatter(FormatStrFormatter('%.3f'))
+        # theta_plot.legend(loc='best')
+        #
+        # # Creating Labels & Saving Figure
+        # plt.suptitle(r'Angular Response as a Function of Time')
+        # plt.xlabel(r'Time [s]')
+        # plt.show()
+        # fig.set_tight_layout('False')
+        # fig.savefig(fname=os.path.join(working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
 
         return 'Figures Plotted and Saved'
 
