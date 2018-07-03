@@ -1,6 +1,16 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+""" This file contains the wrapper interface to be able to instantiate the :class:`StateSpace` from MATLAB and retrieve
+the linearized EoM """
+
+__author__ = ["San Kilkis"]
+
+import __root__
 import sys
-from statespace import StateSpace
+from model import StateSpace
 import scipy.io
+assert __root__
 
 
 def state_wrapper(initial_velocity):

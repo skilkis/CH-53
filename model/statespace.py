@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-""" This file contains the class definition used to calculate the trim conditions of the CH53 Helicopter """
+""" This file contains the class definition used to calculate the Linearized EoM of the CH53 Helicopter """
 
 # http://python-control.readthedocs.io/en/latest/intro.html most likely this will be required
 
@@ -17,7 +17,6 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from matplotlib.ticker import FormatStrFormatter
 import os
-from timeit import default_timer as timer
 from utils import ProgressBar
 assert __root__
 

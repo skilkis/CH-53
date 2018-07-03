@@ -43,10 +43,10 @@ thetac_initial = import.thetac;
 
 dist = strsplit(version,' '); dist = dist{1, 2};
 if ~isempty(strfind(dist,'2018a'))
-    open_system('controller_sim') %to open your model
+    open_system('simulink/controller_sim') %to open your model
     sim('controller_sim')
 else
-    open_system('controller_sim_compat') %to open your model
+    open_system('simulink/controller_sim_compat') %to open your model
     sim('controller_sim_compat')
 end
 
