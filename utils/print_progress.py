@@ -12,8 +12,8 @@ from time import sleep
 
 
 class ProgressBar(threading.Thread):
-    """ Creates a Multi-Threaded progress bar when called that displayes in the terminal. Can be updated w/ built-in
-    methods :method:`update` or :method:`update_loop`. The latter makes it easy to update within a for-loop as long as
+    """ Creates a progress bar when called that displayes in the terminal. Can be updated w/ built-in methods
+    :method:`update` or :method:`update_loop`. The latter makes it easy to update within a for-loop as long as
     a counting variable is present.
 
     WARNING: If you are using IDLE the progress bar will not display correctly due to string incompabilities. Adapted

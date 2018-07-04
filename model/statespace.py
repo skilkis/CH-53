@@ -71,11 +71,14 @@ class StateSpace(Constants):
     def system(self):
         return ss(self.a_matrix, self.b_matrix, self.c_matrix, self.d_matrix)
 
-    def plot_derivatives(self):
+    @staticmethod
+    def plot_derivatives():
+        pbar = ProgressBar('Obtaining Stability Derivatives for Entire Flight Envelope')
         velocities = np.linspace(0, 75, 20)
         x_u = []
         x_w = []
 
+        i = 0
         for v in velocities:
             trim_case = Trim(v)
             derivatives = StabilityDerivatives(u=trim_case.u, w=trim_case.w, q=0,
@@ -84,6 +87,8 @@ class StateSpace(Constants):
                                                longitudinal_cyclic=trim_case.longitudinal_cyclic)
             x_u.append(derivatives.u_derivatives[0])
             x_w.append(derivatives.u_derivatives[1])
+            pbar.update_loop(i, len(velocities)-1, 'V = %1.2f [m/s]' % v)
+            i += 1
 
         plt.plot(velocities, x_u)
         plt.plot(velocities, x_w)
@@ -261,4 +266,5 @@ if __name__ == '__main__':
     print ('B Matrix\n%s\n' % obj.b_matrix)
     print ('Fuselage Pitch %s [deg]' % degrees(obj.stability_derivatives.theta_f))
     obj.plot_comparison()
+    obj.plot_derivatives()
 

@@ -19,7 +19,7 @@ end
 
     
 if trigger_python
-    [status,result] = system(['python statespace_matlabwrap.py '...
+    [status,result] = system(['python statespace_fetcher.py '...
     sprintf('%1.5f', initial_velocity)]);
     import = load('ss.mat');
 end
