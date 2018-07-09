@@ -12,7 +12,7 @@ from numpy.linalg import inv
 from scipy.optimize import fsolve
 import matplotlib.pyplot as plt
 from math import sqrt, pi, degrees, radians, cos, sin, atan
-import os  # Necessary to determining the current working directory to save figures
+import os  # Necessary for saving figures
 assert __root__
 
 

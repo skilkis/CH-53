@@ -189,13 +189,5 @@ class HoverFlapping(Constants):
 
 if __name__ == '__main__':
     obj = HoverFlapping()
-    print (obj.__doc__)
-    print (obj.coning_angle)
-
-    obj.plot_alpha()
-    # print obj.coning_angle
-    # obj.plot_alpha()
-    # obj.plot_response()
-    # print obj.inflow_ratio
-    # print obj.coning_angle
-    # print obj.lock_number
+    print(obj.__doc__)
+    print(obj.coning_angle)
