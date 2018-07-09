@@ -7,8 +7,11 @@ import sys
 from timeit import default_timer as timer
 import threading
 from time import sleep
+import curses
 
 # TODO Comment code fully
+# TODO Consider using curses
+# TODO experiment making this a context manager
 
 
 class ProgressBar(threading.Thread):

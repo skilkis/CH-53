@@ -78,8 +78,7 @@ class StateSpace(Constants):
         x_u = []
         x_w = []
 
-        i = 0
-        for v in velocities:
+        for i, v in enumerate(velocities):
             trim_case = Trim(v)
             derivatives = StabilityDerivatives(u=trim_case.u, w=trim_case.w, q=0,
                                                theta_f=trim_case.fuselage_tilt,
@@ -88,7 +87,6 @@ class StateSpace(Constants):
             x_u.append(derivatives.u_derivatives[0])
             x_w.append(derivatives.u_derivatives[1])
             pbar.update_loop(i, len(velocities)-1, 'V = %1.2f [m/s]' % v)
-            i += 1
 
         plt.plot(velocities, x_u)
         plt.plot(velocities, x_w)

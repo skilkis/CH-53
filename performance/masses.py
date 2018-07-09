@@ -2,8 +2,9 @@
 #  NASA Parametric Study of Helicopter Aircraft Systems Costs and Weights by Beltramo and Morris.
 #  The units are customary, and are given next to the variables.
 
-from math import pi, exp
 __author__ = ['Nelson Johnson']
+
+from math import pi, exp
 
 
 class ComponentWeights(object):

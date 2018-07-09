@@ -5,8 +5,8 @@
 
 from math import pi, sqrt
 from collections import namedtuple
-from masses import ComponentWeights
-from cla_regression import LiftGradient
+from performance.masses import ComponentWeights
+from performance.cla_regression import LiftGradient
 import os
 
 working_dir = os.path.dirname(os.path.realpath(__file__))
@@ -231,5 +231,5 @@ class Constants(object):
 
 if __name__ == '__main__':
     obj = Constants()
-    print (obj)
+    print(obj)
 

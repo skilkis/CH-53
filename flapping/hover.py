@@ -13,7 +13,7 @@ from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from math import radians, sqrt, pi, degrees, cos
-from basic_units import radians as rad_ticks  # Renaming to remove conflict with built-in package
+from utils.basic_units import radians as rad_ticks  # Renaming to remove conflict with built-in package
 import os  # Necessary to determining the current working directory to save figures
 assert __root__
 

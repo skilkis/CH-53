@@ -3,6 +3,7 @@
 
 __author__ = ["San Kilkis"]
 
+import __root__
 from globs import *
 import numpy as np
 import matplotlib.pyplot as plt
@@ -11,9 +12,9 @@ from scipy.interpolate import interp1d
 import os
 from math import sin, cos, asin, degrees
 from collections import Iterable
+assert __root__
 
 N = 100  # Fidelity of the arrays (Higher is better)
-_working_dir = os.getcwd()  # Added for save functionality
 
 # Calculation of the Non-Dimentionlized Velocity
 v_i_hover = sqrt(W/(2*rho*pi*(R**2)))
@@ -88,7 +89,7 @@ plt.xlabel(r'Non-Dimensional Velocity $\overline{V}=\frac{\mu}{\sqrt{C_T/2}}$')
 plt.ylabel(r'Disk Angle of Attack [deg]')
 plt.legend(loc='best')
 plt.show()
-fig.savefig(fname=os.path.join(_working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
+fig.savefig(fname=os.path.join(working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
 
 v_i = []
 for i in range(0, len(V_bar)):
@@ -135,7 +136,7 @@ plt.plot(V_bar_cr, v_i_func(V_cr)/v_i_hover,
 plt.axis([0, 7, 0, 1.0])
 plt.legend(loc='best')
 plt.show()
-fig.savefig(fname=os.path.join(_working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
+fig.savefig(fname=os.path.join(working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
 
 fig = plt.figure('InducedVelocityvsVNum')
 plt.style.use('ggplot')
@@ -157,7 +158,7 @@ plt.plot(V_bar, v_i, label='Numerical Solution', marker='x',
 haffner_x = V_bar_cr * cos(alpha_rad_cr)
 haffner_y = V_bar_cr * sin(alpha_rad_cr)
 
-print 'Haffner Diagram x,y = (%0.1f, %0.1f) for V_cr = %0.1f' % (haffner_x, haffner_y, V_bar_cr)
+print('Haffner Diagram x,y = (%0.1f, %0.1f) for V_cr = %0.1f' % (haffner_x, haffner_y, V_bar_cr))
 
 induced_velocity = [v * v_i_hover for v in v_i]
 v_i_func = interp1d(V, induced_velocity, fill_value='extrapolate')
@@ -176,7 +177,7 @@ plt.plot(V_bar_cr, v_i_func(V_cr)/v_i_hover,
 plt.axis([0, 7, 0, 1.0])
 plt.legend(loc='best')
 plt.show()
-fig.savefig(fname=os.path.join(_working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
+fig.savefig(fname=os.path.join(working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
 
 
 def v_i_tr_func(V_bar_tr):

@@ -12,7 +12,7 @@ import numpy as np
 
 __author__ = ["San Kilkis", 'Nelson Johnson']
 
-airfoil_file = 'SC1095_data.dat'
+airfoil_file = 'data\SC1095_data.dat'
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
@@ -100,7 +100,7 @@ class LiftGradient(object):
         plt.legend(loc='best')
         plt.ion()
         plt.show()
-        fig.savefig(fname=os.path.join(dir_path, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
+        fig.savefig(fname=os.path.join('../', 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
         return 'Figure Plotted and Saved'
 
 
