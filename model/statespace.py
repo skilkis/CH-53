@@ -18,7 +18,9 @@ import matplotlib.gridspec as gridspec
 from matplotlib.ticker import FormatStrFormatter
 import os
 from utils import ProgressBar
-assert __root__
+assert __root__  # Necessary to circumvent PEP-8 Syntax violation on the __root__ import statement
+
+# TODO Finish commenting code
 
 
 class StateSpace(Constants):
@@ -73,6 +75,7 @@ class StateSpace(Constants):
 
     @staticmethod
     def plot_derivatives():
+        # TODO Finish plotting these derivatives
         pbar = ProgressBar('Obtaining Stability Derivatives for Entire Flight Envelope')
         velocities = np.linspace(0, 75, 20)
         x_u = []

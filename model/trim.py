@@ -13,7 +13,7 @@ from scipy.optimize import fsolve
 import matplotlib.pyplot as plt
 from math import sqrt, pi, degrees, radians, cos, sin, atan
 import os  # Necessary for saving figures
-assert __root__
+assert __root__  # Necessary to circumvent PEP-8 Syntax violation on the __root__ import statement
 
 
 class Input(object):

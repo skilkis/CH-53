@@ -3,8 +3,6 @@
 
 """ This file contains the class definition used to calculate the trim conditions of the CH53 Helicopter """
 
-# http://python-control.readthedocs.io/en/latest/intro.html most likely this will be required
-
 __author__ = ["San Kilkis"]
 
 import __root__
@@ -14,13 +12,14 @@ from trim import Trim
 from timeit import default_timer as timer
 
 import numpy as np
-from scipy.optimize import fsolve
+from scipy.optimize import fsolve, curve_fit
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from matplotlib.ticker import FormatStrFormatter
 from math import radians, sqrt, pi, degrees, cos, sin, atan, exp
 import os  # Necessary to determining the current working directory to save figures
-assert __root__
+import sys
+assert __root__  # Necessary to circumvent PEP-8 Syntax violation on the __root__ import statement
 
 # TODO Comment code fully
 
@@ -254,17 +253,17 @@ class StabilityDerivatives(Constants):
         w_dot = []
         q_dot = []
         theta_f_dot = []
-        delta_u = np.linspace(-10, 10, 100)
+        delta_u = np.linspace(-10, 10, 20)
         for i in delta_u:
             case = StabilityDerivatives(u=self.u + i, w=self.w, q=self.q, theta_f=self.theta_f,
                                         collective_pitch=self.collective_pitch,
                                         longitudinal_cyclic=self.longitudinal_cyclic)
-            u_dot.append(case.u_dot / i)
-            w_dot.append(case.w_dot / i)
-            q_dot.append(case.q_dot / i)
-            theta_f_dot.append(case.theta_f_dot / i)
+            u_dot.append(case.u_dot)
+            w_dot.append(case.w_dot)
+            q_dot.append(case.q_dot)
+            theta_f_dot.append(case.theta_f_dot)
 
-        return np.mean(u_dot), np.mean(w_dot), np.mean(q_dot), np.mean(theta_f_dot)
+        return self.linearizer(delta_u, (u_dot, w_dot, q_dot, theta_f_dot), r'{u}', 'm/s', 'horizontal_velocity')
 
     @Attribute
     def w_derivatives(self):
@@ -272,17 +271,17 @@ class StabilityDerivatives(Constants):
         w_dot = []
         q_dot = []
         theta_f_dot = []
-        delta_u = np.linspace(-10, 10, 100)
-        for i in delta_u:
+        delta_w = np.linspace(-10, 10, 20)
+        for i in delta_w:
             case = StabilityDerivatives(u=self.u, w=self.w + i, q=self.q, theta_f=self.theta_f,
                                         collective_pitch=self.collective_pitch,
                                         longitudinal_cyclic=self.longitudinal_cyclic)
-            u_dot.append(case.u_dot / i)
-            w_dot.append(case.w_dot / i)
-            q_dot.append(case.q_dot / i)
-            theta_f_dot.append(case.theta_f_dot / i)
+            u_dot.append(case.u_dot)
+            w_dot.append(case.w_dot)
+            q_dot.append(case.q_dot)
+            theta_f_dot.append(case.theta_f_dot)
 
-        return np.mean(u_dot), np.mean(w_dot), np.mean(q_dot), np.mean(theta_f_dot)
+        return self.linearizer(delta_w, (u_dot, w_dot, q_dot, theta_f_dot), r'{w}', 'm/s', 'vertical_velocity')
 
     @Attribute
     def q_derivatives(self):
@@ -290,17 +289,17 @@ class StabilityDerivatives(Constants):
         w_dot = []
         q_dot = []
         theta_f_dot = []
-        delta_u = np.linspace(radians(-10), radians(10), 100)
-        for i in delta_u:
+        delta_q = np.linspace(radians(-10), radians(10), 20)
+        for i in delta_q:
             case = StabilityDerivatives(u=self.u, w=self.w, q=self.q + i, theta_f=self.theta_f,
                                         collective_pitch=self.collective_pitch,
                                         longitudinal_cyclic=self.longitudinal_cyclic)
-            u_dot.append(case.u_dot / i)
-            w_dot.append(case.w_dot / i)
-            q_dot.append(case.q_dot / i)
-            theta_f_dot.append(case.theta_f_dot / i)
+            u_dot.append(case.u_dot)
+            w_dot.append(case.w_dot)
+            q_dot.append(case.q_dot)
+            theta_f_dot.append(case.theta_f_dot)
 
-        return np.mean(u_dot), np.mean(w_dot), np.mean(q_dot), np.mean(theta_f_dot)
+        return self.linearizer(delta_q, (u_dot, w_dot, q_dot, theta_f_dot), r'{q}', 'rad/s', 'pitch_rate')
 
     @Attribute
     def theta_f_derivatives(self):
@@ -308,17 +307,17 @@ class StabilityDerivatives(Constants):
         w_dot = []
         q_dot = []
         theta_f_dot = []
-        delta_u = np.linspace(radians(-10), radians(10), 100)
-        for i in delta_u:
+        delta_theta = np.linspace(radians(-10), radians(10), 20)
+        for i in delta_theta:
             case = StabilityDerivatives(u=self.u, w=self.w, q=self.q, theta_f=self.theta_f + i,
                                         collective_pitch=self.collective_pitch,
                                         longitudinal_cyclic=self.longitudinal_cyclic)
-            u_dot.append(case.u_dot / i)
-            w_dot.append(case.w_dot / i)
-            q_dot.append(case.q_dot / i)
-            theta_f_dot.append(case.theta_f_dot / i)
+            u_dot.append(case.u_dot)
+            w_dot.append(case.w_dot)
+            q_dot.append(case.q_dot)
+            theta_f_dot.append(case.theta_f_dot)
 
-        return np.mean(u_dot), np.mean(w_dot), np.mean(q_dot), np.mean(theta_f_dot)
+        return self.linearizer(delta_theta, (u_dot, w_dot, q_dot, theta_f_dot), r'{\theta_f}', 'rad', 'fuselage_pitch')
 
     @Attribute
     def collective_derivatives(self):
@@ -326,17 +325,17 @@ class StabilityDerivatives(Constants):
         w_dot = []
         q_dot = []
         theta_f_dot = []
-        delta_u = np.linspace(radians(-10), radians(10), 100)
-        for i in delta_u:
+        delta_col = np.linspace(radians(-10), radians(10), 20)
+        for i in delta_col:
             case = StabilityDerivatives(u=self.u, w=self.w, q=self.q, theta_f=self.theta_f,
                                         collective_pitch=self.collective_pitch + i,
                                         longitudinal_cyclic=self.longitudinal_cyclic)
-            u_dot.append(case.u_dot / i)
-            w_dot.append(case.w_dot / i)
-            q_dot.append(case.q_dot / i)
-            theta_f_dot.append(case.theta_f_dot / i)
+            u_dot.append(case.u_dot)
+            w_dot.append(case.w_dot)
+            q_dot.append(case.q_dot)
+            theta_f_dot.append(case.theta_f_dot)
 
-        return np.mean(u_dot), np.mean(w_dot), np.mean(q_dot), np.mean(theta_f_dot)
+        return self.linearizer(delta_col, (u_dot, w_dot, q_dot, theta_f_dot),  r'{\theta_{0}}', 'rad', 'collective')
 
     @Attribute
     def cyclic_derivatives(self):
@@ -344,17 +343,86 @@ class StabilityDerivatives(Constants):
         w_dot = []
         q_dot = []
         theta_f_dot = []
-        delta_u = np.linspace(radians(-10), radians(10), 100)
-        for i in delta_u:
+        delta_cyc = np.linspace(radians(-10), radians(10), 20)
+        for i in delta_cyc:
             case = StabilityDerivatives(u=self.u, w=self.w, q=self.q, theta_f=self.theta_f,
                                         collective_pitch=self.collective_pitch,
                                         longitudinal_cyclic=self.longitudinal_cyclic + i)
-            u_dot.append(case.u_dot / i)
-            w_dot.append(case.w_dot / i)
-            q_dot.append(case.q_dot / i)
-            theta_f_dot.append(case.theta_f_dot / i)
+            u_dot.append(case.u_dot)
+            w_dot.append(case.w_dot)
+            q_dot.append(case.q_dot)
+            theta_f_dot.append(case.theta_f_dot)
 
-        return np.mean(u_dot), np.mean(w_dot), np.mean(q_dot), np.mean(theta_f_dot)
+        return self.linearizer(delta_cyc, (u_dot, w_dot, q_dot, theta_f_dot), r'{\theta_{ls}}', 'rad', 'cyclic')
+
+    @staticmethod
+    def linearizer(input_list, responses, label, unit, filename):
+        """
+
+        :param input_list:
+        :param responses: Tuple containing responses to varied input
+        :param label:
+        :param unit:
+        :param filename: Name used to save the generated plot
+        :return:
+        """
+
+        def func(x, a):
+            """ Defines a linear regression function y(x) = a*x + b
+
+            :param x: Value(s) on the x-axis which correspond to the disk_loading
+            :type x: int, float, list
+            :param a: slope
+            """
+            return a * x
+
+        x_u = curve_fit(func, input_list, responses[0])[0][0]
+        x_w = curve_fit(func, input_list, responses[1])[0][0]
+        x_q = curve_fit(func, input_list, responses[2])[0][0]
+        x_t = curve_fit(func, input_list, responses[3])[0][0]
+
+        if __name__ == '__main__':  # Prevents plotting function from running unless called upon as a script
+            def subplot_style(axis, xlabel='', ylabel=''):
+                axis.yaxis.set_tick_params(labelsize=7, pad=1)
+                axis.xaxis.set_tick_params(labelsize=7)
+                axis.set_xlabel(xlabel)
+                axis.set_ylabel(ylabel, labelpad=0)
+                axis.legend(loc='best', fontsize=7)
+
+            plt.style.use('ggplot')
+            fig, ((ax0, ax1), (ax2, ax3)) = plt.subplots(2, 2, num='%s' % filename, sharex='all')
+            fig.subplots_adjust(left=0.1, bottom=0.1, right=0.95, top=0.92, wspace=0.25, hspace=0.1)
+
+            # Plotting X_u Stability Derivative
+            ax0.plot(input_list, responses[0], marker='.')
+            ax0.plot(input_list, [x_u * i for i in input_list], linestyle=':', color='black',
+                     label=r'$X_{u_%s}$ = %.3E' % (label, x_u))
+            subplot_style(ax0, '', r'$\Delta \dot{u}$')
+
+            # Plotting X_w Stability Derivative
+            ax1.plot(input_list, responses[1], marker='.')
+            ax1.plot(input_list, [x_w * i for i in input_list], linestyle=':', color='black',
+                     label=r'$X_{w_%s}$ = %.3E' % (label, x_w))
+            subplot_style(ax1, '', r'$\Delta \dot{w}$')
+
+            # Plotting X_q Stability Derivative
+            ax2.plot(input_list, responses[2], marker='.')
+            ax2.plot(input_list, [x_q * i for i in input_list], linestyle=':', color='black',
+                     label=r'$X_{q_%s}$ = %.3E' % (label, x_q))
+            subplot_style(ax2, r'$\Delta %s$ [%s]' % (label, unit),  r'$\Delta \dot{q}$')
+
+            # Plotting X_theta_f Stability Derivative
+            ax3.plot(input_list, responses[3], marker='.')
+            ax3.plot(input_list, [x_t * i for i in input_list], linestyle=':', color='black',
+                     label=r'$X_{\theta_%s}$ = %.3E' % (label, x_t))
+            subplot_style(ax3, r'$\Delta %s$ [%s]' % (label, unit), r'$\Delta \dot{\theta_f}$')
+
+            plt.suptitle(r'Dimensional Stability Derivatives w.r.t $%s$' % label)
+            plt.show()
+            fig.savefig(fname=os.path.join(working_dir, 'Figures', 'stability', '%s.pdf' % fig.get_label()),
+                        format='pdf')
+
+        return x_u, x_w, x_q, x_t
 
     @staticmethod
     def plot_euler_error():
@@ -479,9 +547,31 @@ class StabilityDerivatives(Constants):
 
 if __name__ == '__main__':
     trim_case = Trim(10)  # Hover Trim case at V=0
-    u = trim_case.velocity*cos(trim_case.fuselage_tilt)
-    w = trim_case.velocity*sin(trim_case.fuselage_tilt)
-    obj = StabilityDerivatives(u=u, w=w, q=0, theta_f=trim_case.fuselage_tilt,
+    obj = StabilityDerivatives(u=trim_case.u, w=trim_case.w, q=0, theta_f=trim_case.fuselage_tilt,
                                collective_pitch=trim_case.collective_pitch,
                                longitudinal_cyclic=trim_case.longitudinal_cyclic)
+
+    obj.plot_euler_error()
     obj.plot_response()
+
+    prompt = '\nDo you want to view and plot all stability derivatives? [Y/N]: '
+    disp_derivatives = None
+    if sys.version_info[0] < 3:
+        disp_derivatives = str(raw_input(prompt))
+
+    else:
+        disp_derivatives = input(prompt)
+
+    if 'Y' in disp_derivatives:
+        print('\nHorizontal Velocity Derivatives:')
+        print(obj.u_derivatives)
+        print('\nVertical Velocity Derivatives:')
+        print(obj.w_derivatives)
+        print('\nPitch Rate Derivatives:')
+        print(obj.q_derivatives)
+        print('\nFuselage Pitch Derivatives:')
+        print(obj.theta_f_derivatives)
+        print('\nCollective Derivatives:')
+        print(obj.collective_derivatives)
+        print('\nCyclic Derivatives:')
+        print(obj.cyclic_derivatives)
