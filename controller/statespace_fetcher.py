@@ -10,7 +10,7 @@ import __root__
 import sys
 from model import StateSpace
 import scipy.io
-assert __root__
+assert __root__  # Necessary to circumvent PEP-8 Syntax violation on the __root__ import statement
 
 
 def state_wrapper(initial_velocity):
