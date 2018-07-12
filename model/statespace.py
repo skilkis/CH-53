@@ -3,8 +3,6 @@
 
 """ This file contains the class definition used to calculate the Linearized EoM of the CH53 Helicopter """
 
-# http://python-control.readthedocs.io/en/latest/intro.html most likely this will be required
-
 __author__ = ["San Kilkis", "Nelson Johnson"]
 
 import __root__
@@ -24,7 +22,6 @@ class StateSpace(Constants):
     """ Obtains the stability derivatives at a certain trim condition calculated from :parameter:`initial_velocity`
     utilizing the :class:`StabilityDerivatives` and organizes them into state-space system. A sample response is also
     provided for a Phugoid excitation to be able to compare results to the non-linear equations of motion.
-    form
 
     :param initial_velocity: Initial velocity of the CH-53 in SI meter per second [m/s]
     :type initial_velocity: float

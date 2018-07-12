@@ -79,7 +79,7 @@ class Trim(Constants):
         """ Computes the Non-Dimensional Thrust Coefficient as per S.7 of Lecture 11 Part I
 
         :return: Non-Dimensionalized Thrust Coefficient
-        :return: float
+        :rtype: float
         """
         return self.thrust / (self.rho * ((self.main_rotor.omega * self.main_rotor.radius)**2) * pi
                               * (self.main_rotor.radius**2))
@@ -98,6 +98,7 @@ class Trim(Constants):
         """ Returns the fuselage tilt angle (Negative = Nose Down)
 
         :return: Fuselage Tilt Angle in SI radian [rad]
+        :rtype: float
         """
         return -self.alpha_disk
 
@@ -106,15 +107,27 @@ class Trim(Constants):
         """ Utilizes the ACT Definition from Assignment I to calculate the hover induced velocity
 
         :return: Hover Induced Velocity in SI meter per second [m/s]
+        :rtype: float
         """
         return sqrt(self.weight_mtow/(2*self.rho*pi*(self.main_rotor.radius**2)))
 
     @Attribute
     def normalized_velocity(self):
+        """ Utilizes the induced velocity at hover to non-dimensionalize the current flight velocity
+
+        :return: Non-Dimensional Velocity
+        :rtype: float
+        """
         return self.velocity / self.hover_induced_velocity
 
     @Attribute
     def induced_velocity(self):
+        """ Utilizes a numerical solver to obtain the non-dimensional induced velocity as a function of the
+        non-dimensional velocity and the Disk Angle of Attack (AoA) in the Tip Path Plane (TPP)
+
+        :return: Non-Dimensional Induced Velocity
+        :rtype: float
+        """
 
         def func(x, *args):
             """ Defines a 2-th order equation function (V*sin(a) + v_i)**2 + (V*cos(a))**2 - (1/v_i)**2 = 0
@@ -130,7 +143,12 @@ class Trim(Constants):
 
     @Attribute
     def inflow_ratio(self):
-        """ Computes the Inflow-Ratio utilizing the """
+        """ Computes the Inflow-Ratio utilizing the simplified equation from Assignment I. WARNING: This is only to
+        understand why utilizing this equation leads to errors in the trim condition!
+
+        :return: Inflow Ratio <<< INCORRECT VALUE! >>>
+        :rtype: float
+        """
         return self.induced_velocity / (self.main_rotor.omega * self.main_rotor.radius)
 
     @Attribute
@@ -213,10 +231,20 @@ class Trim(Constants):
 
     @Attribute
     def collective_pitch(self):
+        """ Retrieves the collective pitch required for trim from the numerical solution
+
+        :return: Collective Pitch in SI radian [rad]
+        :return: float
+        """
         return self.numerical_solution[0]
 
     @Attribute
     def longitudinal_cyclic(self):
+        """ Retrieves the longitudinal cyclic required for trim from the numerical solution
+
+        :return: Longitudinal Cyclic in SI radian [rad]
+        :rtype: float
+        """
         return self.numerical_solution[1]
 
     @Attribute
@@ -239,6 +267,12 @@ class Trim(Constants):
 
     @Attribute
     def linearized_solution(self):
+        """ Computes the control inputs required for trim by Linearizing the system of 2 equations with 2 unknowns and
+        solving by taking the matrix inverse.
+
+        :return: Trim solution tuple in SI radian [rad] idx0 = Collective Pitch, idx1 = Longitudinal Cyclic
+        :rtype: tuple
+        """
 
         # Linearizing the Advance-Ratio by neglecting the effect of the Longitudinal Cyclic (Small Angles)
         mu = self.velocity / (self.main_rotor.omega * self.main_rotor.radius)
@@ -259,6 +293,7 @@ class Trim(Constants):
 
     @staticmethod
     def plot_inflow_error():
+        """ Plots the error incurred when utilizing the simplified inflow-ratio equation from Assignment I """
         velocities = np.linspace(0.1, 100, 50)
         trim_conditions = [Trim(v) for v in velocities]
         errors = [((case.inflow_ratio_glau - case.inflow_ratio) / case.inflow_ratio) * 100. for case in trim_conditions]
@@ -274,10 +309,19 @@ class Trim(Constants):
 
     @Attribute
     def velocity_range(self):
+        """ Defines the range of velocities for which the trim solutions will be computed
+
+        :return: Range of flight velocities in SI meter per second [m/s]
+        :rtype: np.array
+        """
         return np.linspace(0, self.cruise_velocity + 10, 1000)
 
     @Attribute
     def trim_conditions(self):
+        """ Instantiates the :class:`Trim` for all velocities specified by :attr:`velocity_range`
+
+        :rtype: Trim
+        """
         return [Trim(v) for v in self.velocity_range]
 
     # TODO check if this method is truely necessary, only wrapping the numerical result which is redundant
