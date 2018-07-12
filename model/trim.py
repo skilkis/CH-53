@@ -320,7 +320,8 @@ class Trim(Constants):
     def trim_conditions(self):
         """ Instantiates the :class:`Trim` for all velocities specified by :attr:`velocity_range`
 
-        :rtype: Trim
+        :return: Multiple instances of the :class:`Trim` for all velocities defined by :attr:`velocity_range`
+        :rtype: list
         """
         return [Trim(v) for v in self.velocity_range]
 
