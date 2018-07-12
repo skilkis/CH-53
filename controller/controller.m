@@ -1,4 +1,5 @@
 close all
+clc
 
 % Trim Condition Input
 initial_velocity = 5.14444; % [m/s]
