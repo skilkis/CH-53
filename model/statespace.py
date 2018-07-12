@@ -11,23 +11,23 @@ import __root__
 from globs import Constants, Attribute, working_dir
 from stabilityderivatives import StabilityDerivatives
 from trim import Trim
-from control.matlab import *
+from control.matlab import ss, lsim, np
 from math import radians, degrees
 import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
 from matplotlib.ticker import FormatStrFormatter
 import os
 from utils import ProgressBar
 assert __root__  # Necessary to circumvent PEP-8 Syntax violation on the __root__ import statement
 
-# TODO Finish commenting code
-
 
 class StateSpace(Constants):
-    """ xxx
+    """ Obtains the stability derivatives at a certain trim condition calculated from :parameter:`initial_velocity`
+    utilizing the :class:`StabilityDerivatives` and organizes them into state-space system. A sample response is also
+    provided for a Phugoid excitation to be able to compare results to the non-linear equations of motion.
+    form
 
-    :param u: xx
-    :type u: xx
+    :param initial_velocity: Initial velocity of the CH-53 in SI meter per second [m/s]
+    :type initial_velocity: float
     """
 
     def __init__(self, initial_velocity=0.0):
@@ -35,6 +35,11 @@ class StateSpace(Constants):
 
     @Attribute
     def initial_trim_case(self):
+        """ Passes the :parameter:`initial_velocity` to the :class:`Trim` to obtain state variables at trim condition
+
+        :return: Trim object containing all state-variables at the desired trim condition
+        :rtype: Trim
+        """
         return Trim(self.initial_velocity)
 
     @Attribute
@@ -49,6 +54,11 @@ class StateSpace(Constants):
 
     @Attribute
     def a_matrix(self):
+        """ Retrieves the relevant stability derivatives and organizes them into the state or system matrix A
+
+        :return: A-matrix
+        :rtype: np.matrix
+        """
         column_1 = np.array(self.stability_derivatives.u_derivatives)
         column_2 = np.array(self.stability_derivatives.w_derivatives)
         column_3 = np.array(self.stability_derivatives.q_derivatives)
@@ -57,25 +67,45 @@ class StateSpace(Constants):
 
     @Attribute
     def b_matrix(self):
+        """ Retrieves the relevant stability derivatives and organizes them into the input matrix B
+
+        :return: B-matrix
+        :rtype: np.matrix
+        """
         column_1 = np.array(self.stability_derivatives.collective_derivatives)
         column_2 = np.array(self.stability_derivatives.cyclic_derivatives)
         return np.matrix([column_1, column_2]).T
 
     @Attribute
     def c_matrix(self):
+        """ Returns a 4x4 identity matrix since simply a new state-variable is desired
+
+        :return: 4x4 Identity C-matrix
+        :rtype: np.diag
+        """
         return np.diag([1., 1., 1., 1.])
 
     @Attribute
     def d_matrix(self):
+        """ The system has no feed-forward for the output vector thus a 4x2 matrix of zeros are required
+
+        :return: 4x2 Matrix of zeroes for the Feed-forward D-matrix
+        :rtype: np.zeros
+        """
         return np.zeros((4, 2))
 
     @Attribute
     def system(self):
+        """ Organizes the obtained state-space matrices into a state-space object utilizing :class:`ss`
+
+        :return: State-space system utilizing the control library
+        :rtype: control.matlab.ss
+        """
         return ss(self.a_matrix, self.b_matrix, self.c_matrix, self.d_matrix)
 
     @staticmethod
     def plot_derivatives():
-        # TODO Finish plotting these derivatives
+        # TODO Finish plotting these derivatives if necessary for the report
         pbar = ProgressBar('Obtaining Stability Derivatives for Entire Flight Envelope')
         velocities = np.linspace(0, 75, 20)
         x_u = []
@@ -97,58 +127,16 @@ class StateSpace(Constants):
 
         return 'Figure Plotted and Saved'
 
-    def step_response(self):
-        sys1 = self.system
-        # sys1 = feedback(sys1, self.controller, +1)
+    def plot_response(self):
+        """ Plots the response of the CH-53 to a step input of 1 [deg] longitudinal cyclic. Note that the state-space
+        representation models the change in inputs and state-variables, thus to use the same input vectors the initial
+        condition is set to zero control deflection. This is then compensated by adding the control deflection
+        necessary for trim during the Forward Euler integration for the non-linear equations. """
 
-        T = np.linspace(0, 40, 1000)
-        cyclic_input = [0]          # delta!!!
-        collective_input = [0]
-
-        # Defining Step Input into the Longitudinal Cyclic
-        for i in range(1, len(T)):
-            if 0.5 < T[i] < 1.0:
-                cyclic_input.append(radians(0.0))
-            else:
-                cyclic_input.append(cyclic_input[0])
-            collective_input.append(collective_input[0])
-
-        U = np.array([collective_input, cyclic_input]).T
-
-        yout, T, xout = lsim(sys1, U=U, T=T)
-
-        plt.figure(1)
-        plt.style.use('ggplot')
-        plt.plot(T, [num+self.stability_derivatives.u for num in yout[:, 0]], label='u')  # U IS CORRECT!
-        plt.plot(T, [num+self.stability_derivatives.w for num in yout[:, 1]], label='w')
-        # plt.plot(T, [degrees(rad + self.stability_derivatives.q) for rad in yout[:, 2]], label='q')  #  q IS CORRECT
-        # plt.plot(T, [degrees(rad + self.stability_derivatives.theta_f) for rad in yout[:, 3]], label='theta_f')  #  theta_f IS CORRECT
-        # print t2.shape, np.array(y2)
-        plt.xlabel('Time')
-        plt.ylabel('Response (y)')
-        plt.legend(loc='best')
-        plt.show()
-
-        plt.figure(2)
-        plt.style.use('ggplot')
-        plt.plot(T, [degrees(num+self.stability_derivatives.q) for num in yout[:, 2]], label='q')  # U IS CORRECT!
-        plt.plot(T, [degrees(num+self.stability_derivatives.theta_f) for num in yout[:, 3]], label='theta_f')
-        # plt.plot(T, [degrees(rad + self.stability_derivatives.q) for rad in yout[:, 2]], label='q')  #  q IS CORRECT
-        # plt.plot(T, [degrees(rad + self.stability_derivatives.theta_f) for rad in yout[:, 3]], label='theta_f')  #  theta_f IS CORRECT
-        # print t2.shape, np.array(y2)
-        plt.xlabel('Time')
-        plt.ylabel('Response (y)')
-        plt.legend(loc='best')
-        plt.show()
-        return 'Plotted'
-
-    def plot_comparison(self):
         pbar = ProgressBar('Performing Linear Simulation')
-        linearized_system = self.system
-
         time = np.linspace(0, 40, 1000)
 
-        # Initial Conditions
+        # Initial Input Conditions
         cyclic_input = [0]
         collective_input = [0]
 
@@ -162,11 +150,11 @@ class StateSpace(Constants):
 
         # Input Matrix U for the State-Space Simulation
         input_matrix = np.array([collective_input, cyclic_input]).T
+
         # Simulating the Linear System
-        yout, time, xout = lsim(linearized_system, U=input_matrix, T=time)
+        yout, time, xout = lsim(self.system, U=input_matrix, T=time)
 
         pbar.update(100)
-        # print ('\nLinear Simulation Performed \n' + 'Duration: %1.5f [s]\n' % (end - start))
 
         delta_t = time[1] - time[0]
         u = [self.stability_derivatives.u]
@@ -189,83 +177,77 @@ class StateSpace(Constants):
                                                 collective_pitch=self.initial_trim_case.collective_pitch)
             pbar.update_loop(i, len(time)-1)
 
-        # Plotting Response
-        fig = plt.figure('EulervsStateVelocities')
+        # Creating First Figure
         plt.style.use('ggplot')
-        gs = gridspec.GridSpec(2, 1, top=0.9)
+        fig, (cyc_plot, vel_plot) = plt.subplots(2, 1, num='EulervsStateVelocities', sharex='all')
 
-        cyc_plot = fig.add_subplot(gs[0, 0])
+        # Plotting Input
         cyc_plot.plot(time, [degrees(rad) for rad in cyclic_input])
         cyc_plot.set_ylabel(r'Lon. Cyclic [deg]')
         cyc_plot.set_xlabel('')
         cyc_plot.yaxis.set_major_formatter(FormatStrFormatter('%.3f'))
+        cyc_plot.set_title(r'Velocity Response as a Function of Time')
 
-        vel_plot = fig.add_subplot(gs[1, 0])
+        # Plotting Velocity Response
         vel_plot.plot(time, u, label='Horizontal')
         vel_plot.plot(time, w, label='Vertical')
-        plt.plot(time, [num+self.stability_derivatives.u for num in yout[:, 0]], linestyle=':', color='black')
-        plt.plot(time, [num+self.stability_derivatives.w for num in yout[:, 1]], linestyle=':', color='black',
-                 label='Lin. Simulation')
+        vel_plot.plot(time, [num+self.stability_derivatives.u for num in yout[:, 0]], linestyle=':', color='black')
+        vel_plot.plot(time, [num+self.stability_derivatives.w for num in yout[:, 1]], linestyle=':', color='black',
+                      label='Lin. Simulation')
         vel_plot.set_ylabel(r'Velocity [m/s]')
         vel_plot.set_xlabel('')
         vel_plot.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
         vel_plot.legend(loc='best')
 
         # Creating Labels & Saving Figure
-        plt.suptitle(r'Velocity Response as a Function of Time')
         plt.xlabel(r'Time [s]')
         plt.show()
-        fig.set_tight_layout('False')
         fig.savefig(fname=os.path.join(working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
 
         # Creating Second Figure
-        fig = plt.figure('EulervsStateAngles')
-        plt.style.use('ggplot')
-        gs = gridspec.GridSpec(3, 1, top=0.925, left=0.15)
-
-        cyc_plot = fig.add_subplot(gs[0, 0])
+        fig, (cyc_plot, q_plot, theta_plot) = plt.subplots(3, 1, num='EulervsStateAngles', sharex='all')
         cyc_plot.plot(time, [degrees(rad) for rad in cyclic_input])
+
+        # Plotting Input
         cyc_plot.set_ylabel(r'$\theta_{ls}$ [deg]')
         cyc_plot.yaxis.set_major_formatter(FormatStrFormatter('%.3f'))
+        cyc_plot.set_title(r'Angular Response as a Function of Time')
 
-        q_plot = fig.add_subplot(gs[1, 0])
+        # Plotting Fuselage Pitch-Rate
         q_plot.plot(time, [degrees(rad) for rad in q])
-        plt.plot(time, [degrees(num+self.stability_derivatives.q) for num in yout[:, 2]],
-                 linestyle=':',
-                 color='black',
-                 label='Lin. Simulation')
+        q_plot.plot(time, [degrees(num+self.stability_derivatives.q) for num in yout[:, 2]],
+                    linestyle=':',
+                    color='black',
+                    label='Lin. Simulation')
         q_plot.set_ylabel(r'$q$ [deg/s]')
         q_plot.set_xlabel('')
-        # q_plot.yaxis.set_major_formatter(FormatStrFormatter('%.1E'))
-        q_plot.yaxis.set_major_formatter(FormatStrFormatter('%.3f'))
+        q_plot.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
         q_plot.legend(loc='best')
 
-        theta_plot = fig.add_subplot(gs[2, 0])
+        # Plotting Fuselage Pitch
         theta_plot.plot(time, [degrees(rad) for rad in theta_f])
-        plt.plot(time, [degrees(num+self.stability_derivatives.theta_f) for num in yout[:, 3]],
-                 linestyle=':',
-                 color='black',
-                 label='Lin. Simulation')
+        theta_plot.plot(time, [degrees(num+self.stability_derivatives.theta_f) for num in yout[:, 3]],
+                        linestyle=':',
+                        color='black',
+                        label='Lin. Simulation')
         theta_plot.set_ylabel(r'$\theta_f$ [deg]')
         theta_plot.set_xlabel('')
-        theta_plot.yaxis.set_major_formatter(FormatStrFormatter('%.3f'))
+        theta_plot.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
         theta_plot.legend(loc='best')
 
-        # Creating Labels & Saving Figure
-        plt.suptitle(r'Angular Response as a Function of Time')
+        # Creating x-label & Saving Figure
         plt.xlabel(r'Time [s]')
         plt.show()
-        fig.set_tight_layout('False')
         fig.savefig(fname=os.path.join(working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
 
         return 'Figures Plotted and Saved'
 
 
 if __name__ == '__main__':
-    obj = StateSpace(initial_velocity=5.14444)
+    obj = StateSpace(initial_velocity=5.1444)
     print ('A Matrix\n%s\n' % obj.a_matrix)
     print ('B Matrix\n%s\n' % obj.b_matrix)
     print ('Fuselage Pitch %s [deg]' % degrees(obj.stability_derivatives.theta_f))
-    obj.plot_comparison()
-    obj.plot_derivatives()
+    # obj.plot_derivatives()
+    obj.plot_response()
 

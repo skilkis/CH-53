@@ -417,7 +417,7 @@ class StabilityDerivatives(Constants):
                      label=r'$X_{\theta_%s}$ = %.3E' % (label, x_t))
             subplot_style(ax3, r'$\Delta %s$ [%s]' % (label, unit), r'$\Delta \dot{\theta_f}$')
 
-            plt.suptitle(r'Dimensional Stability Derivatives w.r.t $%s$' % label)
+            plt.suptitle(r'Dimensional Stability Derivatives w.r.t $%s at V = [m/s]$' % label)
             plt.show()
             fig.savefig(fname=os.path.join(working_dir, 'Figures', 'stability', '%s.pdf' % fig.get_label()),
                         format='pdf')
@@ -550,15 +550,19 @@ if __name__ == '__main__':
     obj = StabilityDerivatives(u=trim_case.u, w=trim_case.w, q=0, theta_f=trim_case.fuselage_tilt,
                                collective_pitch=trim_case.collective_pitch,
                                longitudinal_cyclic=trim_case.longitudinal_cyclic)
+
+    obj.plot_euler_error()
     obj.plot_response()
 
     prompt = '\nDo you want to view and plot all stability derivatives? [Y/N]: '
-    if sys.version_info[0] < 3:
-        disp_derivatives = raw_input(prompt)
+    disp_derivatives = None
+    if sys.version_info[0] < 3:  # Adding compatibility for Python 3.x
+        disp_derivatives = str(raw_input(prompt))
+
     else:
         disp_derivatives = input(prompt)
 
-    if disp_derivatives is 'Y' or 'y':
+    if 'Y' in disp_derivatives or 'y' in disp_derivatives:
         print('\nHorizontal Velocity Derivatives:')
         print(obj.u_derivatives)
         print('\nVertical Velocity Derivatives:')
