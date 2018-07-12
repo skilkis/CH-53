@@ -546,7 +546,7 @@ class StabilityDerivatives(Constants):
 
 
 if __name__ == '__main__':
-    trim_case = Trim(10)  # Hover Trim case at V=0
+    trim_case = Trim(5.144)  # Hover Trim case at V=0
     obj = StabilityDerivatives(u=trim_case.u, w=trim_case.w, q=0, theta_f=trim_case.fuselage_tilt,
                                collective_pitch=trim_case.collective_pitch,
                                longitudinal_cyclic=trim_case.longitudinal_cyclic)
@@ -575,3 +575,8 @@ if __name__ == '__main__':
         print(obj.collective_derivatives)
         print('\nCyclic Derivatives:')
         print(obj.cyclic_derivatives)
+        print
+        print 'Initial u speed = ', trim_case.u, 'm/s'
+        print 'Initial w speed = ', trim_case.w, 'm/s'
+        print 'Initial q = ', 0, 'Rad/s'
+        print 'Initial Fuse Tilt = ', trim_case.fuselage_tilt, 'Rad'
