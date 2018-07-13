@@ -254,6 +254,7 @@ class StabilityDerivatives(Constants):
         :return: Angular Acceleration about the y-axis in SI radian per second squared [rad/s^2]
         :rtype: float
         """
+
         return (-self.thrust / self.inertia.yy) * self.rotor_distance_to_cg * \
                sin(self.longitudinal_cyclic - self.longitudinal_disk_tilt)
 
@@ -354,7 +355,7 @@ class StabilityDerivatives(Constants):
         w_dot = []
         q_dot = []
         theta_f_dot = []
-        delta_theta = np.linspace(radians(-10), radians(10), 20)
+        delta_theta = np.linspace(radians(-2.5), radians(2.5), 20)
         for i in delta_theta:
             case = StabilityDerivatives(u=self.u, w=self.w, q=self.q, theta_f=self.theta_f + i,
                                         collective_pitch=self.collective_pitch,
@@ -542,9 +543,9 @@ class StabilityDerivatives(Constants):
     def plot_response(self):
         """ A plot of the non-linear system response to a step-input """
 
-        time = np.linspace(0, 10, 1000)
+        time = np.linspace(0, 40, 1000)
         delta_t = time[1] - time[0]
-        cyclic_input = [0]
+        cyclic_input = [self.longitudinal_cyclic]
         u = [self.u]
         w = [self.w]
         q = [self.q]
@@ -554,24 +555,22 @@ class StabilityDerivatives(Constants):
         # Forward Euler Integration
         pbar = ProgressBar('Performing Forward Euler Integration')
         for i in range(1, len(time)):
-            u.append(current_case.u + current_case.u_dot * delta_t)
-            w.append(current_case.w + current_case.w_dot * delta_t)
-            q.append(current_case.q + current_case.q_dot * delta_t)
-            theta_f.append(current_case.theta_f + current_case.theta_f_dot * delta_t)
+            u = u + [current_case.u + current_case.u_dot * delta_t]
+            w = w + [current_case.w + current_case.w_dot * delta_t]
+            q = q + [current_case.q + current_case.q_dot * delta_t]
+            theta_f = theta_f + [current_case.theta_f + current_case.theta_f_dot * delta_t]
 
             # Control Inputs based on Initial Conditions
             if 0.5 < time[i] < 1.0:
-                cyclic_input.append(self.longitudinal_cyclic + radians(1.0))
+                cyclic_input = cyclic_input + [self.longitudinal_cyclic + radians(1.0)]
             else:
-                cyclic_input.append(self.longitudinal_cyclic)
+                cyclic_input = cyclic_input + [self.longitudinal_cyclic]
 
             current_case = StabilityDerivatives(u=u[i], w=w[i], q=q[i], theta_f=theta_f[i],
                                                 longitudinal_cyclic=cyclic_input[i],
                                                 collective_pitch=self.collective_pitch)
-            pbar.update_loop(i, len(time)-1)
 
-        # end = timer()
-        # print ('\nIntegration Performed \n' + 'Duration: %1.5f [s]\n' % (end - start))
+            pbar.update_loop(i, len(time)-1)
 
         # Plotting Response
         plt.style.use('ggplot')
@@ -607,7 +606,6 @@ class StabilityDerivatives(Constants):
         q_plot.plot(time, [degrees(rad) for rad in q])
         q_plot.set_ylabel(r'$q$ [deg/s]')
         q_plot.set_xlabel('')
-        # q_plot.yaxis.set_major_formatter(FormatStrFormatter('%.1E'))
         q_plot.yaxis.set_major_formatter(FormatStrFormatter('%.3f'))
 
         theta_plot.plot(time, [degrees(rad) for rad in theta_f])
