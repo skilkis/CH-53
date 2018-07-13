@@ -52,7 +52,7 @@ Cc = C(1:3,1:3);
 Dc = D(1:3,:);
 %sys = ss(Ac,Bc,Cc,Dc);
 
-[K,S,E] = lqr(A,B,eye(4),eye(2));
+[K,S,E] = lqr(A,B,0.001*eye(4),eye(2));
 
 %[K,S,E] = lqr(Ac,Bc,eye(3),eye(2));
 %Nbar = rscale(Ac,Bc,Cc,Dc,K);
@@ -61,7 +61,7 @@ Dc = D(1:3,:);
 %[5.14399965391, -0.00188695927223, 0, -0.000366827238443]
 %% Running Simulink Model
 
-open_system('simulink/controller_sim_compat_control_new')
+open_system('simulink/controller_sim_compat_control_saturated')
 
 %dist = strsplit(version,' '); dist = dist{1, 2};
 %if ~isempty(strfind(dist,'2018a'))
