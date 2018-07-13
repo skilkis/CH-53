@@ -9,11 +9,10 @@ import __root__
 from globs import Constants, Attribute, working_dir
 from inertia.ch53_inertia import CH53Inertia
 from trim import Trim
-from timeit import default_timer as timer
+from utils import ProgressBar
 import numpy as np
 from scipy.optimize import fsolve, curve_fit
 import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
 from matplotlib.ticker import FormatStrFormatter
 from math import radians, sqrt, pi, degrees, cos, sin, atan, exp
 import os  # Necessary to determining the current working directory to save figures
@@ -273,7 +272,8 @@ class StabilityDerivatives(Constants):
             q_dot.append(case.q_dot)
             theta_f_dot.append(case.theta_f_dot)
 
-        return self.linearizer(delta_u, (u_dot, w_dot, q_dot, theta_f_dot), r'{u}', 'm/s', 'horizontal_velocity')
+        return self.linearizer(delta_u, (u_dot, w_dot, q_dot, theta_f_dot), r'{u}', 'm/s', 'horizontal_velocity',
+                               velocity=self.velocity)
 
     @Attribute
     def w_derivatives(self):
@@ -291,7 +291,8 @@ class StabilityDerivatives(Constants):
             q_dot.append(case.q_dot)
             theta_f_dot.append(case.theta_f_dot)
 
-        return self.linearizer(delta_w, (u_dot, w_dot, q_dot, theta_f_dot), r'{w}', 'm/s', 'vertical_velocity')
+        return self.linearizer(delta_w, (u_dot, w_dot, q_dot, theta_f_dot), r'{w}', 'm/s', 'vertical_velocity',
+                               velocity=self.velocity)
 
     @Attribute
     def q_derivatives(self):
@@ -309,7 +310,8 @@ class StabilityDerivatives(Constants):
             q_dot.append(case.q_dot)
             theta_f_dot.append(case.theta_f_dot)
 
-        return self.linearizer(delta_q, (u_dot, w_dot, q_dot, theta_f_dot), r'{q}', 'rad/s', 'pitch_rate')
+        return self.linearizer(delta_q, (u_dot, w_dot, q_dot, theta_f_dot), r'{q}', 'rad/s', 'pitch_rate',
+                               velocity=self.velocity)
 
     @Attribute
     def theta_f_derivatives(self):
@@ -327,7 +329,8 @@ class StabilityDerivatives(Constants):
             q_dot.append(case.q_dot)
             theta_f_dot.append(case.theta_f_dot)
 
-        return self.linearizer(delta_theta, (u_dot, w_dot, q_dot, theta_f_dot), r'{\theta_f}', 'rad', 'fuselage_pitch')
+        return self.linearizer(delta_theta, (u_dot, w_dot, q_dot, theta_f_dot), r'{\theta_f}', 'rad', 'fuselage_pitch',
+                               velocity=self.velocity)
 
     @Attribute
     def collective_derivatives(self):
@@ -345,7 +348,8 @@ class StabilityDerivatives(Constants):
             q_dot.append(case.q_dot)
             theta_f_dot.append(case.theta_f_dot)
 
-        return self.linearizer(delta_col, (u_dot, w_dot, q_dot, theta_f_dot),  r'{\theta_{0}}', 'rad', 'collective')
+        return self.linearizer(delta_col, (u_dot, w_dot, q_dot, theta_f_dot),  r'{\theta_{0}}', 'rad', 'collective',
+                               velocity=self.velocity)
 
     @Attribute
     def cyclic_derivatives(self):
@@ -363,10 +367,11 @@ class StabilityDerivatives(Constants):
             q_dot.append(case.q_dot)
             theta_f_dot.append(case.theta_f_dot)
 
-        return self.linearizer(delta_cyc, (u_dot, w_dot, q_dot, theta_f_dot), r'{\theta_{ls}}', 'rad', 'cyclic')
+        return self.linearizer(delta_cyc, (u_dot, w_dot, q_dot, theta_f_dot), r'{\theta_{ls}}', 'rad', 'cyclic',
+                               velocity=self.velocity)
 
     @staticmethod
-    def linearizer(input_list, responses, label, unit, filename):
+    def linearizer(input_list, responses, label, unit, filename, velocity):
         """
 
         :param input_list:
@@ -378,7 +383,7 @@ class StabilityDerivatives(Constants):
         """
 
         def func(x, a):
-            """ Defines a linear regression function y(x) = a*x + b
+            """ Defines a linear regression function without intercept y(x) = a*x
 
             :param x: Value(s) on the x-axis which correspond to the disk_loading
             :type x: int, float, list
@@ -397,11 +402,14 @@ class StabilityDerivatives(Constants):
                 axis.xaxis.set_tick_params(labelsize=7)
                 axis.set_xlabel(xlabel)
                 axis.set_ylabel(ylabel, labelpad=0)
+                # axis.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
                 axis.legend(loc='best', fontsize=7)
+                axis.grid(b=True, which='both', linestyle='-')
 
-            plt.style.use('ggplot')
-            fig, ((ax0, ax1), (ax2, ax3)) = plt.subplots(2, 2, num='%s' % filename, sharex='all')
-            fig.subplots_adjust(left=0.1, bottom=0.1, right=0.95, top=0.92, wspace=0.25, hspace=0.1)
+            # fig = plt.figure('%s' % filename)
+            # plt.style.use('Solarize_Light2')
+            fig, ((ax0, ax1), (ax2, ax3)) = plt.subplots(2, 2, num='%s' % filename, sharex='all',
+                                                         gridspec_kw={'top': 0.9, 'wspace': 0.3})
 
             # Plotting X_u Stability Derivative
             ax0.plot(input_list, responses[0], marker='.')
@@ -427,7 +435,12 @@ class StabilityDerivatives(Constants):
                      label=r'$X_{\theta_%s}$ = %.3E' % (label, x_t))
             subplot_style(ax3, r'$\Delta %s$ [%s]' % (label, unit), r'$\Delta \dot{\theta_f}$')
 
-            plt.suptitle(r'Dimensional Stability Derivatives w.r.t $%s at V = [m/s]$' % label)
+            fig.suptitle(r'Dimensional Stability Derivatives w.r.t $%s$ at $V_{\mathrm{trim}} = %.2f$ [m/s]'
+                         % (label, velocity), fontsize=14)
+            # plt.show()
+            # plt.subplots_adjust(top=0.7)
+            # plt.subplots_adjust(top=0.9)
+            plt.tight_layout()
             plt.show()
             fig.savefig(fname=os.path.join(working_dir, 'Figures', 'stability', '%s.pdf' % fig.get_label()),
                         format='pdf')
@@ -476,7 +489,7 @@ class StabilityDerivatives(Constants):
         current_case = self
 
         # Forward Euler Integration
-        start = timer()
+        pbar = ProgressBar('Performing Forward Euler Integration')
         for i in range(1, len(time)):
             u.append(current_case.u + current_case.u_dot * delta_t)
             w.append(current_case.w + current_case.w_dot * delta_t)
@@ -492,23 +505,21 @@ class StabilityDerivatives(Constants):
             current_case = StabilityDerivatives(u=u[i], w=w[i], q=q[i], theta_f=theta_f[i],
                                                 longitudinal_cyclic=cyclic_input[i],
                                                 collective_pitch=self.collective_pitch)
+            pbar.update_loop(i, len(time)-1)
 
-        end = timer()
-        print ('\nIntegration Performed \n' + 'Duration: %1.5f [s]\n' % (end - start))
+        # end = timer()
+        # print ('\nIntegration Performed \n' + 'Duration: %1.5f [s]\n' % (end - start))
 
         # Plotting Response
-        fig = plt.figure('EulerResponseVelocities')
         plt.style.use('ggplot')
-        gs = gridspec.GridSpec(2, 1, top=0.9)
-        fig.set_tight_layout('False')
+        fig, (cyc_plot, vel_plot) = plt.subplots(2, 1, num='EulerResponseVelocities', sharex='all')
 
-        cyc_plot = fig.add_subplot(gs[0, 0])
         cyc_plot.plot(time, [degrees(rad) for rad in cyclic_input])
         cyc_plot.set_ylabel(r'Lon. Cyclic [deg]')
         cyc_plot.set_xlabel('')
+        cyc_plot.set_title(r'Velocity Response as a Function of Time')
         cyc_plot.yaxis.set_major_formatter(FormatStrFormatter('%.3f'))
 
-        vel_plot = fig.add_subplot(gs[1, 0])
         vel_plot.plot(time, u, label='Horizontal')
         vel_plot.plot(time, w, label='Vertical')
         vel_plot.set_ylabel(r'Velocity [m/s]')
@@ -517,37 +528,31 @@ class StabilityDerivatives(Constants):
         vel_plot.legend(loc='best')
 
         # Creating Labels & Saving Figure
-        plt.suptitle(r'Velocity Response as a Function of Time')
         plt.xlabel(r'Time [s]')
         plt.show()
         fig.savefig(fname=os.path.join(working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
 
         # Creating Second Figure
-        fig = plt.figure('EulerResponseAngles')
         plt.style.use('ggplot')
-        fig.set_tight_layout('False')
-        gs = gridspec.GridSpec(3, 1, top=0.925, left=0.15)
+        fig, (cyc_plot, q_plot, theta_plot) = plt.subplots(3, 1, num='EulerResponseAngles', sharex='all')
 
-        cyc_plot = fig.add_subplot(gs[0, 0])
         cyc_plot.plot(time, [degrees(rad) for rad in cyclic_input])
         cyc_plot.set_ylabel(r'$\theta_{ls}$ [deg]')
+        cyc_plot.set_title(r'Angular Response as a Function of Time')
         cyc_plot.yaxis.set_major_formatter(FormatStrFormatter('%.3f'))
 
-        q_plot = fig.add_subplot(gs[1, 0])
         q_plot.plot(time, [degrees(rad) for rad in q])
         q_plot.set_ylabel(r'$q$ [deg/s]')
         q_plot.set_xlabel('')
         # q_plot.yaxis.set_major_formatter(FormatStrFormatter('%.1E'))
         q_plot.yaxis.set_major_formatter(FormatStrFormatter('%.3f'))
 
-        theta_plot = fig.add_subplot(gs[2, 0])
         theta_plot.plot(time, [degrees(rad) for rad in theta_f])
         theta_plot.set_ylabel(r'$\theta_f$ [deg]')
         theta_plot.set_xlabel('')
         theta_plot.yaxis.set_major_formatter(FormatStrFormatter('%.3f'))
 
         # Creating Labels & Saving Figure
-        plt.suptitle(r'Angular Response as a Function of Time')
         plt.xlabel(r'Time [s]')
         plt.show()
         fig.savefig(fname=os.path.join(working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
@@ -561,8 +566,8 @@ if __name__ == '__main__':
                                collective_pitch=trim_case.collective_pitch,
                                longitudinal_cyclic=trim_case.longitudinal_cyclic)
 
-    obj.plot_euler_error()
-    obj.plot_response()
+    # obj.plot_euler_error()
+    # obj.plot_response()
 
     prompt = '\nDo you want to view and plot all stability derivatives? [Y/N]: '
     disp_derivatives = None
@@ -585,7 +590,7 @@ if __name__ == '__main__':
         print(obj.collective_derivatives)
         print('\nCyclic Derivatives:')
         print(obj.cyclic_derivatives)
-        print('Initial u speed = %1.2f [m/s]' % trim_case.u)
+        print('\nInitial u speed = %1.2f [m/s]' % trim_case.u)
         print('Initial w speed = %1.2f [m/s]' % trim_case.w)
         print('Initial q =  0 [rad/s]')
-        print('Initial Fuse Tilt = %1.2f [rad]' % trim_case.fuselage_tilt)
+        print('Initial Fuse Tilt = %1.5f [rad]' % trim_case.fuselage_tilt)
