@@ -5,6 +5,12 @@ clc
 initial_velocity = 5.14444; % [m/s]
 
 % Maneuver Parameters
+maneuver = 'hover'; % Options: ['hover', 'hold']
+
+% Controllers (1 = On, 0 = Off)
+surge = 1;
+althold = 1;
+compensator = 1;
 
 %% Running statespace_matlabwrap.py if Necessary
 
@@ -32,6 +38,7 @@ B=import.B;
 C=double(import.C);
 D=import.D;
 
+% Imported Trim Conditions
 u_initial = import.u;
 w_initial = import.w;
 q_initial = 0; % Due to Linearized State-Space being obtained at trim
@@ -39,29 +46,29 @@ thetaf_initial = import.thetaf;
 theta0_initial = import.theta0;
 thetac_initial = import.thetac;
 
-%[K,S,E] = lqr(A,B(:,1),eye(4),1); %one input of collective
-%[K2,S2,E3] = lqr(A,B(:,2),eye(4),1)
-
-
-
-
-%create controller matricies
+% Creating Controller Matricies
 Ac = A(1:3,1:3);
 Bc = B(1:3,:);
 Cc = C(1:3,1:3);
 Dc = D(1:3,:);
-%sys = ss(Ac,Bc,Cc,Dc);
 
+% Performing Linear Quadratic Regulator Optimization
 [K,S,E] = lqr(A,B,0.001*eye(4),eye(2));
 
-%[K,S,E] = lqr(Ac,Bc,eye(3),eye(2));
-%Nbar = rscale(Ac,Bc,Cc,Dc,K);
+% Setting Desired Values for the Controller
+switch maneuver
+    case 'hover'
+        u_wish = 0; w_wish = 0; q_wish = 0; thetaf_wish = 0; h_wish=0;
+    case 'hold'
+        u_wish = u_initial; w_wish = w_initial; q_wish = q_initial;...
+            thetaf_wish = thetaf_initial; h_wish=0;
+end
 
-
-%[5.14399965391, -0.00188695927223, 0, -0.000366827238443]
 %% Running Simulink Model
 
-open_system('simulink/controller_sim_compat_control_saturated')
+open_system('simulink/controller_sim_compat_control_saturated');
+handle=get_param('controller_sim_compat_control_saturated','handle');
+print(handle,'-dpdf','schematic');
 
 %dist = strsplit(version,' '); dist = dist{1, 2};
 %if ~isempty(strfind(dist,'2018a'))
