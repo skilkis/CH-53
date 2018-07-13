@@ -402,37 +402,36 @@ class StabilityDerivatives(Constants):
                 axis.xaxis.set_tick_params(labelsize=7)
                 axis.set_xlabel(xlabel)
                 axis.set_ylabel(ylabel, labelpad=0)
-                # axis.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
                 axis.legend(loc='best', fontsize=7)
                 axis.grid(b=True, which='both', linestyle='-')
 
             # fig = plt.figure('%s' % filename)
-            # plt.style.use('Solarize_Light2')
+            plt.style.use('ggplot')
             fig, ((ax0, ax1), (ax2, ax3)) = plt.subplots(2, 2, num='%s' % filename, sharex='all',
                                                          gridspec_kw={'top': 0.9, 'wspace': 0.3})
 
             # Plotting X_u Stability Derivative
             ax0.plot(input_list, responses[0], marker='.')
             ax0.plot(input_list, [x_u * i for i in input_list], linestyle=':', color='black',
-                     label=r'$X_{u_%s}$ = %.3E' % (label, x_u))
+                     label=r'$\frac{\Delta \dot{u}}{\Delta %s}$ = %.3E' % (label, x_u))
             subplot_style(ax0, '', r'$\Delta \dot{u}$')
 
             # Plotting X_w Stability Derivative
             ax1.plot(input_list, responses[1], marker='.')
             ax1.plot(input_list, [x_w * i for i in input_list], linestyle=':', color='black',
-                     label=r'$X_{w_%s}$ = %.3E' % (label, x_w))
+                     label=r'$\frac{\Delta \dot{w}}{\Delta %s}$ = %.3E' % (label, x_w))
             subplot_style(ax1, '', r'$\Delta \dot{w}$')
 
             # Plotting X_q Stability Derivative
             ax2.plot(input_list, responses[2], marker='.')
             ax2.plot(input_list, [x_q * i for i in input_list], linestyle=':', color='black',
-                     label=r'$X_{q_%s}$ = %.3E' % (label, x_q))
+                     label=r'$\frac{\Delta \dot{q}}{\Delta %s}$ = %.3E' % (label, x_q))
             subplot_style(ax2, r'$\Delta %s$ [%s]' % (label, unit),  r'$\Delta \dot{q}$')
 
             # Plotting X_theta_f Stability Derivative
             ax3.plot(input_list, responses[3], marker='.')
             ax3.plot(input_list, [x_t * i for i in input_list], linestyle=':', color='black',
-                     label=r'$X_{\theta_%s}$ = %.3E' % (label, x_t))
+                     label=r'$\frac{\Delta \dot{\theta}_f}{\Delta %s}$ = %.3E' % (label, x_t))
             subplot_style(ax3, r'$\Delta %s$ [%s]' % (label, unit), r'$\Delta \dot{\theta_f}$')
 
             fig.suptitle(r'Dimensional Stability Derivatives w.r.t $%s$ at $V_{\mathrm{trim}} = %.2f$ [m/s]'
