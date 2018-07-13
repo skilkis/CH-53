@@ -606,6 +606,7 @@ class StabilityDerivatives(Constants):
         q_plot.plot(time, [degrees(rad) for rad in q])
         q_plot.set_ylabel(r'$q$ [deg/s]')
         q_plot.set_xlabel('')
+        # q_plot.yaxis.set_major_formatter(FormatStrFormatter('%.1E'))
         q_plot.yaxis.set_major_formatter(FormatStrFormatter('%.3f'))
 
         theta_plot.plot(time, [degrees(rad) for rad in theta_f])
