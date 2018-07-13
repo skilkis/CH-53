@@ -19,8 +19,6 @@ import os  # Necessary to determining the current working directory to save figu
 import sys
 assert __root__  # Necessary to circumvent PEP-8 Syntax violation on the __root__ import statement
 
-# TODO Comment code fully
-
 
 class StabilityDerivatives(Constants):
     """ Computes the trim condition of the CH-53 based on current velocities
@@ -249,15 +247,34 @@ class StabilityDerivatives(Constants):
 
     @Attribute
     def q_dot(self):
+        """ Computes the angular acceleration about the y-axis of the CH-53 (body-axis) utilizing moment equilibrium,
+        NOTE: the y-axis is defined as positive to the right (starboard), thus a positive value means the helicopter
+        is building up nose-up pitch-rate
+
+        :return: Angular Acceleration about the y-axis in SI radian per second squared [rad/s^2]
+        :rtype: float
+        """
         return (-self.thrust / self.inertia.yy) * self.rotor_distance_to_cg * \
                sin(self.longitudinal_cyclic - self.longitudinal_disk_tilt)
 
     @Attribute
     def theta_f_dot(self):
+        """ Simply returns the value of the pitch-rate assuming that the fuselage pitch rate is equivalent to the
+        pitch rate of the entire helicopter
+
+        :return: Pitch-rate in SI radian per second [rad/s]
+        :rtype: float
+        """
         return self.q
 
     @Attribute
     def u_derivatives(self):
+        """ Computes the change in acceleration caused by a change in horizontal velocity u, by computing the response
+        to a range of inputs and then fitting a linear regression.
+
+        :return: Tuple containing the entries for the first column of the A-matrix
+        :rtype: tuple
+        """
         u_dot = []
         w_dot = []
         q_dot = []
@@ -277,6 +294,12 @@ class StabilityDerivatives(Constants):
 
     @Attribute
     def w_derivatives(self):
+        """ Computes the change in acceleration caused by a change in vertical velocity w, by computing the response
+        to a range of inputs and then fitting a linear regression.
+
+        :return: Tuple containing the entries for the second column of the A-matrix
+        :rtype: tuple
+        """
         u_dot = []
         w_dot = []
         q_dot = []
@@ -296,6 +319,12 @@ class StabilityDerivatives(Constants):
 
     @Attribute
     def q_derivatives(self):
+        """ Computes the change in angular acceleration caused by a change in pitch-rate q, by computing the response
+        to a range of inputs and then fitting a linear regression.
+
+        :return: Tuple containing the entries for the third column of the A-matrix
+        :rtype: tuple
+        """
         u_dot = []
         w_dot = []
         q_dot = []
@@ -315,6 +344,12 @@ class StabilityDerivatives(Constants):
 
     @Attribute
     def theta_f_derivatives(self):
+        """ Computes the change in angular velocity caused by a change in fuselage pitch, by computing the response
+        to a range of inputs and then fitting a linear regression.
+
+        :return: Tuple containing the entries for the last column of the A-matrix
+        :rtype: tuple
+        """
         u_dot = []
         w_dot = []
         q_dot = []
@@ -334,6 +369,12 @@ class StabilityDerivatives(Constants):
 
     @Attribute
     def collective_derivatives(self):
+        """ Computes the change in acceleration caused by a collective pitch input, by computing the response to a range
+        of inputs and then fitting a linear regression.
+
+        :return: Tuple containing the entries for the first column of the B-matrix
+        :rtype: tuple
+        """
         u_dot = []
         w_dot = []
         q_dot = []
@@ -353,6 +394,12 @@ class StabilityDerivatives(Constants):
 
     @Attribute
     def cyclic_derivatives(self):
+        """ Computes the change in acceleration caused by a longitudinal cyclic input, by computing the response to a
+        range of inputs and then fitting a linear regression.
+
+        :return: Tuple containing the entries for the second column of the B-matrix
+        :rtype: tuple
+        """
         u_dot = []
         w_dot = []
         q_dot = []
@@ -372,14 +419,29 @@ class StabilityDerivatives(Constants):
 
     @staticmethod
     def linearizer(input_list, responses, label, unit, filename, velocity):
-        """
+        """ Utilizes a simple linear regression to fit a best-approximation to the non-linear behavior of the CH-53. If
+        run as a script, this will return plots of all linear regressions as well as the non-linear responses.
 
-        :param input_list:
-        :param responses: Tuple containing responses to varied input
-        :param label:
-        :param unit:
+        :param input_list: An ordered list of the incremental inputs into the system used to obtain accelerations
+        :type input_list: float or ndarray
+
+        :param responses: Length 4 Tuple containing responses to varied input
+        :type responses: tuple
+
+        :param label: Description of the incremental input, ex: r'\theta_{ls}'
+        :type: label: str
+
+        :param unit: SI unit of the incremental input
+        :type unit: str
+
         :param filename: Name used to save the generated plot
-        :return:
+        :type filename: str
+
+        :param: velocity: Flight velocity in SI meter per second [m/s]
+        :type velocity: float
+
+        :return: Tuple containing linearized dimensional stability derivatives
+        :rtype: tuple
         """
 
         def func(x, a):
@@ -448,6 +510,7 @@ class StabilityDerivatives(Constants):
 
     @staticmethod
     def plot_euler_error():
+        """ Depicts the error incurred when utilizing forward Euler integration """
 
         fig = plt.figure('EulerError')
         plt.style.use('ggplot')
@@ -477,6 +540,7 @@ class StabilityDerivatives(Constants):
         fig.savefig(fname=os.path.join(working_dir, 'Figures', '%s.pdf' % fig.get_label()), format='pdf')
 
     def plot_response(self):
+        """ A plot of the non-linear system response to a step-input """
 
         time = np.linspace(0, 10, 1000)
         delta_t = time[1] - time[0]
@@ -565,8 +629,8 @@ if __name__ == '__main__':
                                collective_pitch=trim_case.collective_pitch,
                                longitudinal_cyclic=trim_case.longitudinal_cyclic)
 
-    # obj.plot_euler_error()
-    # obj.plot_response()
+    obj.plot_euler_error()
+    obj.plot_response()
 
     prompt = '\nDo you want to view and plot all stability derivatives? [Y/N]: '
     disp_derivatives = None
