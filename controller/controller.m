@@ -61,7 +61,7 @@ Dc = D(1:3,:);
 %[5.14399965391, -0.00188695927223, 0, -0.000366827238443]
 %% Running Simulink Model
 
-open_system('simulink/controller_sim_compat_control')
+open_system('simulink/controller_sim_compat_control_new')
 
 %dist = strsplit(version,' '); dist = dist{1, 2};
 %if ~isempty(strfind(dist,'2018a'))
