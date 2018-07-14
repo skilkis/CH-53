@@ -6,3 +6,6 @@
 
 # Simulink Autosave Files
 .autosave
+
+# Simulink Cache Files
+controller/slprj
