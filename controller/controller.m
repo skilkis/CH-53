@@ -1,7 +1,7 @@
 clc
 close all
 
-author = ['?an K?lk??'];
+% Author: San Kilkis
 
 % Trim Condition Input
 initial_velocity = 5.14444; % [m/s]
@@ -11,7 +11,7 @@ initial_velocity = 5.14444; % [m/s]
 % _s: Surge Hold Controller & Comp.
 % _a: Altitude Hold Controller & Comp.
 % _as: Altitude Hold & Surge Controller & Comp.
-maneuver = 'phughoid'; % Options: ['hover', 'hover_s', hover_a', 'hover_as'
+maneuver = 'phughoid_a'; % Options: ['hover', 'hover_s', hover_a', 'hover_as'
                                   %'phughoid', 'phughoid_c', 'phughoid_s'
                                   %'phughoid_a', 'phughoid_as']
 
@@ -260,7 +260,7 @@ if ~isempty(strfind(dist,'2018a'))
     model = 'ch53_sim';
 else
     folder = 'simulink';
-    model = 'ch53_sim';
+    model = 'ch53_sim_compat';
 end
 
 % Loads System, Sets Simulation Stop Time, and Runs Simulation
