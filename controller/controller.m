@@ -1,17 +1,23 @@
 clc
 close all
 
+author = ['?an K?lk??'];
+
 % Trim Condition Input
 initial_velocity = 5.14444; % [m/s]
 
-% Maneuver Parameters (Compensator is always turned on for hover)
-% _s: Surge Hold Controller
-% _a: Altitude Hold Controller
-% _as: Surge
-maneuver = 'hover_as'; % Options: ['hover', 'hover_s', hover_a', 'hover_as']
+% Maneuver Parameters (NOTE: Compensator is always turned on for hover)
+% _c: Compensator
+% _s: Surge Hold Controller & Comp.
+% _a: Altitude Hold Controller & Comp.
+% _as: Altitude Hold & Surge Controller & Comp.
+maneuver = 'phughoid'; % Options: ['hover', 'hover_s', hover_a', 'hover_as'
+                                  %'phughoid', 'phughoid_c', 'phughoid_s'
+                                  %'phughoid_a', 'phughoid_as']
 
-% Toggle Dispalying Simulink Controller
+% Toggle Dispalying Simulink Controller & Printing Schematic of Model
 show_simulink = 0;
+print_schematic = 0;
 
 %% Running statespace_matlabwrap.py if Necessary
 
@@ -75,7 +81,10 @@ switch maneuver
         
         % Setting Plot States
         plot_responses = 1;
-        plot_poles = 0;
+        plot_poles = 1;
+        
+        % Simulation Time
+        sim_time = 70;
         
     case 'hover_s'
         u_wish = 0; w_wish = 0; q_wish = 0; thetaf_wish = 0; h_wish=0;
@@ -93,6 +102,9 @@ switch maneuver
         plot_responses = 1;
         plot_poles = 0;
         
+        % Simulation Time
+        sim_time = 70;
+        
     case 'hover_a'
         u_wish = 0; w_wish = 0; q_wish = 0; thetaf_wish = 0; h_wish=0;
         
@@ -109,6 +121,9 @@ switch maneuver
         plot_responses = 1;
         plot_poles = 0;
 
+        % Simulation Time
+        sim_time = 70;
+        
     case 'hover_as'
         u_wish = 0; w_wish = 0; q_wish = 0; thetaf_wish = 0; h_wish=0;
         
@@ -125,48 +140,138 @@ switch maneuver
         plot_responses = 1;
         plot_poles = 0;
         
+        % Simulation Time
+        sim_time = 70;
+        
     case 'phughoid'
         u_wish = u_initial; w_wish = w_initial; q_wish = q_initial;...
             thetaf_wish = thetaf_initial; h_wish=0;
         
+        % Controllers (1 = On, 0 = Off)
+        surge = 0;
+        althold = 0;
+        compensator = 0;
+
+        % Disturbances (For Phughoid)
+        collective_dist = 0;
+        cyclic_dist = 1;
+ 
         % Setting Plot States
         plot_responses = 1;
         plot_poles = 1;
+        
+        % Simulation Time
+        sim_time = 40;
+        
+        % Creating LTI System
+        sys = ss(A, B, C, D);
+        
+    case 'phughoid_c'
+        u_wish = u_initial; w_wish = w_initial; q_wish = q_initial;...
+            thetaf_wish = thetaf_initial; h_wish=0;
+        
+        % Controllers (1 = On, 0 = Off)
+        surge = 0;
+        althold = 0;
+        compensator = 1;
+
+        % Disturbances (For Phughoid)
+        collective_dist = 0;
+        cyclic_dist = 1;
+ 
+        % Setting Plot States
+        plot_responses = 1;
+        plot_poles = 0;
+        
+        % Simulation Time
+        sim_time = 40;
+        
+    case 'phughoid_s'
+        u_wish = u_initial; w_wish = w_initial; q_wish = q_initial;...
+            thetaf_wish = thetaf_initial; h_wish=0;
+        
+        % Controllers (1 = On, 0 = Off)
+        surge = 1;
+        althold = 0;
+        compensator = 1;
+
+        % Disturbances (For Phughoid)
+        collective_dist = 0;
+        cyclic_dist = 1;
+ 
+        % Setting Plot States
+        plot_responses = 1;
+        plot_poles = 0;
+        
+        % Simulation Time
+        sim_time = 40;
+        
+    case 'phughoid_a'
+        u_wish = u_initial; w_wish = w_initial; q_wish = q_initial;...
+            thetaf_wish = thetaf_initial; h_wish=0;
+        
+        % Controllers (1 = On, 0 = Off)
+        surge = 0;
+        althold = 1;
+        compensator = 1;
+
+        % Disturbances (For Phughoid)
+        collective_dist = 0;
+        cyclic_dist = 1;
+ 
+        % Setting Plot States
+        plot_responses = 1;
+        plot_poles = 0;
+        
+        % Simulation Time
+        sim_time = 40;
+        
+    case 'phughoid_as'
+        u_wish = u_initial; w_wish = w_initial; q_wish = q_initial;...
+            thetaf_wish = thetaf_initial; h_wish=0;
+        
+        % Controllers (1 = On, 0 = Off)
+        surge = 1;
+        althold = 1;
+        compensator = 1;
+
+        % Disturbances (For Phughoid)
+        collective_dist = 0;
+        cyclic_dist = 1;
+ 
+        % Setting Plot States
+        plot_responses = 1;
+        plot_poles = 1;
+        
+        % Simulation Time
+        sim_time = 40;
+        
+        % Loading Control LTI System
+        sys = load('ss_control.mat'); sys = sys.lincontrol;
+
 end
 
 %% Running Simulink Model & Printing Schematic
 
-% open_system('simulink/ch53_sim') %to open your model
-sim('simulink/ch53_sim');
-handle=get_param('ch53_sim','handle');
-print(handle,'-dpdf','Figures/schematic');
-
 % Checks MATLAB version to determine correct simulink file:
 dist = strsplit(version,' '); dist = dist{1, 2};
 if ~isempty(strfind(dist,'2018a'))
-    sim('simulink/ch53_sim');
-    handle=get_param('ch53_sim','handle');
-    print(handle,'-dpdf','Figures/schematic');
-    if show_simulink
-        open_system('simulink/ch53_sim')
-    end
+    folder = 'simulink';
+    model = 'ch53_sim';
 else
-    sim('simulink/ch53_sim');
-    handle=get_param('ch53_sim','handle');
-    print(handle,'-dpdf','Figures/schematic');
-    if show_simulink
-        open_system('simulink/ch53_sim')
-    end
+    folder = 'simulink';
+    model = 'ch53_sim';
 end
 
+% Loads System, Sets Simulation Stop Time, and Runs Simulation
+load_system(sprintf('%s/%s', folder, model))
+set_param(model,'StopTime',sprintf('%d', sim_time))
+sim(model);
 
-% %% Linearizing Model
-% 
-% [A2,B2,C2,D2] = linmod('controller_sim_compat_control_saturated');
-% 
-% sys = ss(A2,B2,C2,D2);
-% 
-% pzmap(sys)
+% User-Requested Actions for Opening the Simulink File & Printing Schematic
+handle=get_param(model,'handle');
+if show_simulink; open_system(model); end
+if print_schematic; print(handle,'-dpdf','Figures/schematic'); end
 
 %% Plotting
 
@@ -251,6 +356,30 @@ if plot_responses
         'PaperSize', [AR(1) AR(2)]);
 end
 
+if plot_poles
+    
+    if plot_responses
+
+    figure('Name',sprintf('pzmap_%s', maneuver));
+    
+        h = pzplot(sys);
+        grid on;
+        
+        p = getoptions(h); 
+        p.Title.String = sprintf('%s (%s)', p.Title.String, controller_state);
+        p.XLabel.String = 'Re(\lambda)';
+        p.YLabel.String = 'Im(\lambda)';
+        p.GridColor = [0.5, 0.5, 0.5];
+        setoptions(h,p);  
+        
+        set(gcf, 'InvertHardCopy', 'off',...
+        'PaperPosition', [0 0 AR(1) AR(2)],...
+        'PaperSize', [AR(1) AR(2)]);
+    
+    end
+    
+end
+
 %% Saving/Overwriting Figures in the Images Folder as a .pdf
 
 choice=questdlg('Would you like to close and save all figures to ../Figures?',...
@@ -305,7 +434,7 @@ switch choice
         b2=msgbox('Operation Completed','Success');
 end
 
-
+%% Methods
 function str = toggle_str(value)
 % Returns ON or OFF depending on the current value of the toggle switch
     if value == 0
