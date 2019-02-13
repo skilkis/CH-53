@@ -1,6 +1,9 @@
 # PyCharm Project Folder
 .idea/
 
+# Compiled Python Files
+*.pyc
+
 # User-Config Files
 *.cfg
 
