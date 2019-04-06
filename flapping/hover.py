@@ -1,23 +1,28 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-""" This file contains the class definition used to estimate the flapping dynamics of the CH53 Helicopter in hover """
+""" This file contains the class definition used to estimate the flapping 
+dynamics of the CH53 Helicopter in hover """
 
-__author__ = ["San Kilkis"]
-
-import __root__
-from globs import Constants, Attribute, working_dir
 import numpy as np
 from scipy import integrate
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from math import radians, sqrt, pi, degrees, cos
-from utils.basic_units import radians as rad_ticks  # Renaming to remove conflict with built-in package
 import os  # Necessary to determining the current working directory to save figures
-assert __root__
+
+if __package__:
+    from ..globs import Constants, Attribute, working_dir
+    from ..utils.basic_units import radians as rad_ticks
+else:
+    import sys
+    sys.path.insert(0, '..')
+    from globs import Constants, Attribute, working_dir
+    from utils.basic_units import radians as rad_ticks
 
 # TODO Fully comment the code
+__author__ = ["San Kilkis"]
 
 
 class HoverFlapping(Constants):
