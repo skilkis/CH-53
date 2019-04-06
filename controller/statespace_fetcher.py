@@ -4,7 +4,11 @@
 """ This file contains the wrapper interface to be able to instantiate the 
 :class:`StateSpace` from MATLAB and retrieve the linearized EoM """
 
+<<<<<<< HEAD
 from scipy.io import savemat
+=======
+from scipy import io
+>>>>>>> 910ac7a0881563033f69fb65a551dd0136e620eb
 
 if __package__:
     from ..model import StateSpace
@@ -21,6 +25,7 @@ def state_wrapper(initial_velocity):
     print ('\nLinearizing System Dynamics at V = %1.4f [m/s] \n' % initial_velocity)
 
     ss_obj = StateSpace(initial_velocity)
+<<<<<<< HEAD
     savemat('ss.mat',
             dict(A=ss_obj.a_matrix,
                  B=ss_obj.b_matrix,
@@ -32,6 +37,19 @@ def state_wrapper(initial_velocity):
                  thetaf=ss_obj.initial_trim_case.fuselage_tilt,
                  thetac=ss_obj.initial_trim_case.longitudinal_cyclic,
                  theta0=ss_obj.initial_trim_case.collective_pitch))
+=======
+    io.savemat('ss.mat',
+               dict(A=ss_obj.a_matrix,
+                    B=ss_obj.b_matrix,
+                    C=ss_obj.c_matrix,
+                    D=ss_obj.d_matrix,
+                    velocity=initial_velocity,
+                    u=ss_obj.initial_trim_case.u,
+                    w=ss_obj.initial_trim_case.w,
+                    thetaf=ss_obj.initial_trim_case.fuselage_tilt,
+                    thetac=ss_obj.initial_trim_case.longitudinal_cyclic,
+                    theta0=ss_obj.initial_trim_case.collective_pitch))
+>>>>>>> 910ac7a0881563033f69fb65a551dd0136e620eb
     return 'Operation Successful'
 
 
