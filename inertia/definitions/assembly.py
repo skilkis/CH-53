@@ -10,7 +10,8 @@ __all__ = ["Part", "Assembly"]
 
 
 class Part(property):
-    """ Re-names the property decorator as Part to be able to distinguish between built-in class `property` """
+    """ Re-names the property decorator as Part to be able to distinguish 
+    between built-in class `property` """
     pass
 
 
@@ -100,7 +101,8 @@ class Assembly(object):
 
     @classmethod
     def get_children(cls):
-        return [value for value in vars(cls).values() if isinstance(value, Part)]
+        return [value for value in vars(cls).values() if
+                isinstance(value, Part)]
 
 
 if __name__ == '__main__':

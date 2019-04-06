@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # from components import Battery
-""" This file contains the class definition used to estimate the Mass Moment of Inertia of the CH53 Helicopter """
+""" This file contains the class definition used to estimate the Mass Moment 
+of Inertia of the CH53 Helicopter """
 
 
 from definitions import *

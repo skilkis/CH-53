@@ -3,7 +3,6 @@
 
 # Compiled Python Files
 *.pyc
-
 # User-Config Files
 *.cfg
 
@@ -12,3 +11,6 @@
 
 # Simulink Cache Files
 controller/slprj
+
+# VS Code Files
+.vscode

@@ -9,6 +9,8 @@ __author__ = ["San Kilkis"]
 class Point(object):
     """ A simple class to define a point """
 
+    __slots__ = ['x', 'y', 'z']
+
     def __init__(self, x, y, z):
         self.x = float(x)
         self.y = float(y)
@@ -20,6 +22,9 @@ class Point(object):
 
 class Inertia(object):
     """ A simple class to define an Inertia Vector (Neglecting off-diagonal terms for now"""
+
+    __slots__ = ['xx', 'yy', 'zz']
+
     def __init__(self, xx, yy, zz):
         self.xx = float(xx)
         self.yy = float(yy)

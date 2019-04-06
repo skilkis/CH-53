@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-""" This file contains the class definition used to calculate the trim conditions of the CH53 Helicopter """
+""" This file contains the class definition used to calculate the trim 
+conditions of the CH53 Helicopter """
 
-__author__ = ["San Kilkis"]
-
-import __root__
+from __future__ import print_function
+import model.__root__
 from globs import Constants, Attribute, working_dir
 from inertia.ch53_inertia import CH53Inertia
-from trim import Trim
+from model.trim import Trim
 from utils import ProgressBar
 import numpy as np
 from scipy.optimize import fsolve, curve_fit
@@ -17,8 +17,9 @@ from matplotlib.ticker import FormatStrFormatter
 from math import radians, sqrt, pi, degrees, cos, sin, atan, exp
 import os  # Necessary to determining the current working directory to save figures
 import sys
-assert __root__  # Necessary to circumvent PEP-8 Syntax violation on the __root__ import statement
+assert model.__root__  # Necessary to circumvent PEP-8 Syntax violation on the __root__ import statement
 
+__author__ = ["San Kilkis"]
 
 class StabilityDerivatives(Constants):
     """ Computes the trim condition of the CH-53 based on current velocities
@@ -42,7 +43,8 @@ class StabilityDerivatives(Constants):
     :type longitudinal_cyclic: float
     """
 
-    def __init__(self, u=0.0, w=0.0, q=0.0, theta_f=0.0, collective_pitch=0.0, longitudinal_cyclic=0.0):
+    def __init__(self, u=0.0, w=0.0, q=0.0, theta_f=0.0, collective_pitch=0.0,
+                 longitudinal_cyclic=0.0):
         self.u = float(u)  # Horizontal Velocity [m/s]
         self.w = float(w)  # Vertical Velocity [m/s]
         self.q = float(q)  # Pitch Rate [rad/s]
@@ -61,12 +63,15 @@ class StabilityDerivatives(Constants):
 
     @Attribute
     def alpha_control(self):
-        """ Computes the Angle of Attack (AoA) of the control plane in SI radian [rad] depending on flight conditions.
-        If the helicopter is in horizontal translation motion then the FPA (Flight Path Angle), gamma, is computed
-        based on the angle formed by the horizontal and vertical velocities. Also, if the horizontal velocity is
-        negative then 180 degrees (pi) is added to this angle to keep it consistent and in the correct quadrant. On the
-        other hand, if the helicopter is in pure vertical motion, then the FPA is perpendicular to the horizon and
-        a value of pi/2 or -pi/2 is returned depending on the direction of flight.
+        """ Computes the Angle of Attack (AoA) of the control plane in SI 
+        radian [rad] depending on flight conditions. If the helicopter is in 
+        horizontal translation motion then the FPA (Flight Path Angle), gamma, 
+        is computed based on the angle formed by the horizontal and vertical 
+        velocities. Also, if the horizontal velocity is negative then 180 
+        degrees (pi) is added to this angle to keep it consistent and in the 
+        correct quadrant. On the other hand, if the helicopter is in pure 
+        vertical motion, then the FPA is perpendicular to the horizon and a 
+        value of pi/2 or -pi/2 is returned depending on the direction of flight.
 
         :return: Control Plane Angle of Attack (AoA) in SI radian [rad]
         :rtype: float
