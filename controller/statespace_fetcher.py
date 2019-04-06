@@ -4,7 +4,11 @@
 """ This file contains the wrapper interface to be able to instantiate the 
 :class:`StateSpace` from MATLAB and retrieve the linearized EoM """
 
+<<<<<<< HEAD
 from scipy.io import savemat
+=======
+from scipy import io
+>>>>>>> 910ac7a0881563033f69fb65a551dd0136e620eb
 
 if __package__:
     from ..model import StateSpace
