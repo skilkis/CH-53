@@ -1,12 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-""" This file contains the class definition used to estimate the Mass Moment of Inertia of the CH53 Helicopter """
-
-__author__ = ["San Kilkis"]
-
-import __root__
-from globs import Constants, Attribute, working_dir
+""" This file contains the class definition used to estimate the Mass Moment 
+of Inertia of the CH53 Helicopter """
 
 import numpy as np
 from scipy import integrate
@@ -15,9 +11,18 @@ from scipy.optimize import fsolve
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from math import radians, sqrt, pi, degrees, cos, sin, asin
-from utils.basic_units import radians as rad_ticks  # Renaming to remove conflict with built-in package
 import os  # Necessary to determining the current working directory to save figures
-assert __root__
+
+if __package__:
+    from ..globs import Constants, Attribute, working_dir
+    from ..utils.basic_units import radians as rad_ticks
+else:
+    import sys
+    sys.path.insert(0, '..')
+    from globs import Constants, Attribute, working_dir
+    from utils.basic_units import radians as rad_ticks
+
+__author__ = ["San Kilkis"]
 
 
 class ForwardFlapping(Constants):
