@@ -36,5 +36,13 @@ def state_wrapper(initial_velocity):
 
 
 if __name__ == '__main__':
-    input_velocity = float(sys.argv[1])
-    sys.stdout.write(state_wrapper(input_velocity))
+    if len(sys.argv) > 1:
+        input_velocity = float(sys.argv[1])
+    else:
+        prompt = '\nPlease Enter a Flight Velocity in m/s: '
+        if sys.version_info[0] < 3:  # Adding compatibility for Python 3.x
+            input_velocity = str(raw_input(prompt))
+        else:
+            input_velocity = input(prompt)20
+    sys.stdout.write(state_wrapper(float(input_velocity)))
+
