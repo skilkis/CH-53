@@ -1,5 +1,16 @@
 # PyCharm Project Folder
 .idea/
 
+# Compiled Python Files
+*.pyc
 # User-Config Files
 *.cfg
+
+# Simulink Autosave Files
+.autosave
+
+# Simulink Cache Files
+controller/slprj
+
+# VS Code Files
+.vscode

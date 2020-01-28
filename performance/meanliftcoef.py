@@ -9,7 +9,6 @@ from scipy import optimize
 import matplotlib.pyplot as plt
 import numpy as np
 import os
-from globs import DL
 
 
 def medium_lift_coef(disk_loading=350, plot=True):
@@ -23,7 +22,7 @@ def medium_lift_coef(disk_loading=350, plot=True):
     Usage:
 
     >>> lift_coefficent = medium_lift_coef(disk_loading=490)
-    >>> print lift_coefficent
+    >>> print (lift_coefficent)
     0.695935841011
     """
 
@@ -83,5 +82,7 @@ def medium_lift_coef(disk_loading=350, plot=True):
 
 if __name__ == '__main__':
     f_call = medium_lift_coef(DL)
-    print f_call
+    print (f_call)
+
+    # TODO Fix Globals import for DL
 
